@@ -502,8 +502,8 @@ keyword 3"></textarea>
                     <div class="sap-form-row">
                         <label for="serp-language"><?php _e('Search Language', 'seo-analytics-pro'); ?></label>
                         <select id="serp-language" name="sap_settings[serp_language]">
-                            <option value="uk" <?php selected($settings['serp_language'] ?? 'uk', 'uk'); ?>>Українська (Ukrainian)</option>
-                            <option value="ru" <?php selected($settings['serp_language'] ?? '', 'ru'); ?>>Русский (Russian)</option>
+                            <option value="ru" <?php selected($settings['serp_language'] ?? 'ru', 'ru'); ?>>Русский (Russian)</option>
+                            <option value="uk" <?php selected($settings['serp_language'] ?? '', 'uk'); ?>>Українська (Ukrainian)</option>
                             <option value="en" <?php selected($settings['serp_language'] ?? '', 'en'); ?>>English</option>
                             <option value="de" <?php selected($settings['serp_language'] ?? '', 'de'); ?>>Deutsch (German)</option>
                             <option value="fr" <?php selected($settings['serp_language'] ?? '', 'fr'); ?>>Français (French)</option>

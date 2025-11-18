@@ -63,7 +63,7 @@ class SAP_SERP {
         $this->provider = $settings['serp_api_provider'] ?? 'serpapi';
         $this->api_key = $settings['serp_api_key'] ?? '';
         $this->location = $settings['serp_location'] ?? 'Ukraine';
-        $this->language = $settings['serp_language'] ?? 'uk';
+        $this->language = $settings['serp_language'] ?? 'ru';
         $this->google_domain = $settings['serp_google_domain'] ?? 'google.com.ua';
     }
 
