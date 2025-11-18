@@ -113,7 +113,15 @@ class SAP_Core {
         require_once SAP_INCLUDES_DIR . 'models/class-sap-competitor.php';
         require_once SAP_INCLUDES_DIR . 'models/class-sap-report.php';
 
+        /**
+         * Chatbot classes
+         */
+        require_once SAP_INCLUDES_DIR . 'chatbot/class-sap-chatbot-loader.php';
+
         $this->loader = new SAP_Loader();
+
+        // Initialize chatbot
+        SAP_Chatbot_Loader::init();
     }
 
     /**
