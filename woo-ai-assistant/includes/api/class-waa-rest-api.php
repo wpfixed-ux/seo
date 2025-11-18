@@ -165,6 +165,9 @@ class WAA_REST_API {
         $result = $assistant->query($message, $session_id, $language);
 
         if (!$result['success']) {
+            // Log error for debugging
+            error_log('WAA Chat Error: ' . $result['error']);
+
             return new WP_Error(
                 'assistant_error',
                 $result['error'],

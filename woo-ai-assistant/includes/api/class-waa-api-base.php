@@ -39,9 +39,11 @@ abstract class WAA_API_Base {
         ));
 
         if (is_wp_error($response)) {
+            $error_msg = $response->get_error_message();
+            error_log('WAA API Error (WP): ' . $error_msg . ' | URL: ' . $url);
             return array(
                 'success' => false,
-                'error' => $response->get_error_message()
+                'error' => $error_msg
             );
         }
 
@@ -53,6 +55,8 @@ abstract class WAA_API_Base {
             $error_message = isset($error_data['error']['message'])
                 ? $error_data['error']['message']
                 : "HTTP Error: $code";
+
+            error_log('WAA API Error (HTTP ' . $code . '): ' . $error_message . ' | URL: ' . $url);
 
             return array(
                 'success' => false,

@@ -33,6 +33,7 @@ class WAA_Assistant {
         $query_embedding = $ai_provider->get_embedding($user_message);
 
         if (!$query_embedding['success']) {
+            error_log('WAA Embedding Error: ' . $query_embedding['error']);
             return array(
                 'success' => false,
                 'error' => $query_embedding['error']
@@ -60,6 +61,7 @@ class WAA_Assistant {
         $response = $ai_provider->chat($messages);
 
         if (!$response['success']) {
+            error_log('WAA Chat Completion Error: ' . $response['error']);
             return array(
                 'success' => false,
                 'error' => $response['error']
