@@ -32,6 +32,7 @@ class SAP_SERP {
     private $endpoints = array(
         'serpapi' => 'https://serpapi.com/search',
         'dataforseo' => 'https://api.dataforseo.com/v3/serp/google/organic/live/advanced',
+        'hasdata' => 'https://api.hasdata.com/scrape/google/serp',
     );
 
     /**
@@ -95,6 +96,9 @@ class SAP_SERP {
 
             case 'dataforseo':
                 return $this->fetch_dataforseo($keyword, $options);
+
+            case 'hasdata':
+                return $this->fetch_hasdata($keyword, $options);
 
             default:
                 return new WP_Error('invalid_provider', __('Invalid SERP API provider', 'seo-analytics-pro'));
@@ -202,6 +206,56 @@ class SAP_SERP {
     }
 
     /**
+     * Fetch results from HasData
+     *
+     * @param string $keyword The keyword
+     * @param array $options Options
+     * @return array|WP_Error Results or error
+     */
+    private function fetch_hasdata($keyword, $options) {
+        $start_time = microtime(true);
+
+        $params = array(
+            'q' => $keyword,
+            'location' => $options['location'],
+            'hl' => $options['language'],
+            'gl' => $this->get_country_code($options['location']),
+            'domain' => $options['google_domain'],
+            'num' => $options['num_results'],
+            'deviceType' => $options['device']
+        );
+
+        $url = add_query_arg($params, $this->endpoints['hasdata']);
+
+        $response = wp_remote_get($url, array(
+            'timeout' => 30,
+            'headers' => array(
+                'x-api-key' => $this->api_key
+            )
+        ));
+
+        $execution_time = microtime(true) - $start_time;
+
+        if (is_wp_error($response)) {
+            $this->log_api_call('hasdata', $url, $params, null, null, $execution_time);
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        $this->log_api_call('hasdata', $url, $params, $data, $status_code, $execution_time);
+
+        if ($status_code !== 200) {
+            $error_message = $data['error'] ?? $data['message'] ?? 'Unknown error';
+            return new WP_Error('api_error', sprintf(__('HasData error: %s', 'seo-analytics-pro'), $error_message));
+        }
+
+        return $this->normalize_hasdata_results($data, $keyword);
+    }
+
+    /**
      * Normalize SERPApi results to standard format
      *
      * @param array $data Raw API response
@@ -306,6 +360,58 @@ class SAP_SERP {
                         }
                     }
                 }
+            }
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Normalize HasData results to standard format
+     *
+     * @param array $data Raw API response
+     * @param string $keyword The keyword
+     * @return array Normalized results
+     */
+    private function normalize_hasdata_results($data, $keyword) {
+        $normalized = array(
+            'keyword' => $keyword,
+            'total_results' => $data['searchInformation']['totalResults'] ?? 0,
+            'results' => array(),
+            'related_keywords' => array(),
+            'people_also_ask' => array(),
+            'raw_data' => $data
+        );
+
+        // Normalize organic results
+        if (!empty($data['organicResults'])) {
+            foreach ($data['organicResults'] as $i => $result) {
+                $normalized['results'][] = array(
+                    'position' => $result['position'] ?? ($i + 1),
+                    'title' => $result['title'] ?? '',
+                    'url' => $result['link'] ?? '',
+                    'domain' => $this->extract_domain($result['link'] ?? ''),
+                    'description' => $result['snippet'] ?? '',
+                    'displayed_url' => $result['displayedLink'] ?? ''
+                );
+            }
+        }
+
+        // Extract related searches
+        if (!empty($data['relatedSearches'])) {
+            foreach ($data['relatedSearches'] as $related) {
+                $normalized['related_keywords'][] = $related['query'] ?? '';
+            }
+        }
+
+        // Extract People Also Ask
+        if (!empty($data['peopleAlsoAsk'])) {
+            foreach ($data['peopleAlsoAsk'] as $question) {
+                $normalized['people_also_ask'][] = array(
+                    'question' => $question['question'] ?? '',
+                    'answer' => $question['snippet'] ?? '',
+                    'source' => $question['link'] ?? ''
+                );
             }
         }
 

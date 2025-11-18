@@ -476,22 +476,30 @@ keyword 3"></textarea>
                         <select id="serp-api-provider" name="sap_settings[serp_api_provider]">
                             <option value="serpapi" <?php selected($settings['serp_api_provider'] ?? '', 'serpapi'); ?>>SERPApi</option>
                             <option value="dataforseo" <?php selected($settings['serp_api_provider'] ?? '', 'dataforseo'); ?>>DataForSEO</option>
+                            <option value="hasdata" <?php selected($settings['serp_api_provider'] ?? '', 'hasdata'); ?>>HasData (Free Plan Available)</option>
                         </select>
+                        <p class="description">
+                            <?php _e('Choose your SERP API provider.', 'seo-analytics-pro'); ?>
+                            <a href="https://hasdata.com/prices" target="_blank"><?php _e('HasData has a free plan for testing', 'seo-analytics-pro'); ?></a>
+                        </p>
                     </div>
 
                     <div class="sap-form-row">
                         <label for="serp-api-key">
                             <?php _e('SERP API Key', 'seo-analytics-pro'); ?> *
-                            <span class="sap-help">
-                                <a href="https://serpapi.com/" target="_blank"><?php _e('Get API Key', 'seo-analytics-pro'); ?></a>
-                            </span>
                         </label>
                         <input type="password"
                                id="serp-api-key"
                                name="sap_settings[serp_api_key]"
                                value="<?php echo esc_attr($settings['serp_api_key'] ?? ''); ?>"
                                class="regular-text">
-                        <p class="description"><?php _e('Required for fetching search engine results.', 'seo-analytics-pro'); ?></p>
+                        <p class="description">
+                            <?php _e('Required for fetching search engine results.', 'seo-analytics-pro'); ?>
+                            <?php _e('Get API key:', 'seo-analytics-pro'); ?>
+                            <a href="https://serpapi.com/" target="_blank">SERPApi</a> |
+                            <a href="https://dataforseo.com/" target="_blank">DataForSEO</a> |
+                            <a href="https://hasdata.com/" target="_blank">HasData</a>
+                        </p>
                     </div>
                 </div>
 
