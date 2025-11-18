@@ -85,6 +85,7 @@ class SAP_Core {
         require_once SAP_INCLUDES_DIR . 'analyzers/class-sap-competitor-analyzer.php';
         require_once SAP_INCLUDES_DIR . 'analyzers/class-sap-content-analyzer.php';
         require_once SAP_INCLUDES_DIR . 'analyzers/class-sap-strategy-generator.php';
+        require_once SAP_INCLUDES_DIR . 'analyzers/class-sap-lsi-extractor.php';
 
         /**
          * Processor classes
