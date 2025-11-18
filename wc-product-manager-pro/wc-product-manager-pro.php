@@ -29,6 +29,10 @@ define('WCPMP_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('WCPMP_INCLUDES_DIR', WCPMP_PLUGIN_DIR . 'includes/');
 define('WCPMP_ASSETS_URL', WCPMP_PLUGIN_URL . 'assets/');
 
+// Load activator and deactivator early (needed for activation/deactivation hooks)
+require_once WCPMP_INCLUDES_DIR . 'class-wcpmp-activator.php';
+require_once WCPMP_INCLUDES_DIR . 'class-wcpmp-deactivator.php';
+
 /**
  * Main plugin class
  */
@@ -81,8 +85,6 @@ final class WC_Product_Manager_Pro {
     private function load_dependencies() {
         // Core
         require_once WCPMP_INCLUDES_DIR . 'class-wcpmp-loader.php';
-        require_once WCPMP_INCLUDES_DIR . 'class-wcpmp-activator.php';
-        require_once WCPMP_INCLUDES_DIR . 'class-wcpmp-deactivator.php';
 
         // Admin
         require_once WCPMP_INCLUDES_DIR . 'admin/class-wcpmp-admin.php';
