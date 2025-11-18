@@ -1,0 +1,71 @@
+/* SEO Analytics Pro - Admin Styles */
+.sap-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.sap-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.sap-header {
+    border-bottom: 1px solid #e5e5e5;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+}
+
+.sap-button-primary {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.sap-button-primary:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+.sap-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sap-table th,
+.sap-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.sap-table th {
+    background: #f6f7f7;
+    font-weight: 600;
+}
+
+.sap-loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.sap-loading:after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #2271b1;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
