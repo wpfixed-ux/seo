@@ -141,7 +141,7 @@
                         $typing.remove();
 
                         if (response.success) {
-                            addMessage(response.message, 'assistant', response.products);
+                            addMessage(response.message, 'assistant', response.products, response.message_id);
                             sessionId = response.session_id;
                             language = response.language;
                         } else {
@@ -159,7 +159,7 @@
                 });
             }
 
-            function addMessage(content, type, products) {
+            function addMessage(content, type, products, messageId) {
                 var $message = $('<div class="waa-message waa-message-' + type + '"></div>');
                 var $content = $('<div class="waa-message-content"></div>');
 
@@ -191,8 +191,87 @@
                     $message.append($cards);
                 }
 
+                // Add feedback buttons for assistant messages
+                if (type === 'assistant' && messageId) {
+                    var $feedback = $('<div class="waa-feedback" data-message-id="' + messageId + '"></div>');
+                    $feedback.append(
+                        '<button class="waa-feedback-btn waa-feedback-up" title="Полезный ответ">' +
+                        '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>' +
+                        '</button>' +
+                        '<button class="waa-feedback-btn waa-feedback-down" title="Неточный ответ">' +
+                        '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>' +
+                        '</button>'
+                    );
+                    $message.append($feedback);
+                }
+
                 $messages.append($message);
                 scrollToBottom();
+            }
+
+            // Handle feedback clicks
+            $messages.on('click', '.waa-feedback-btn', function() {
+                var $btn = $(this);
+                var $feedback = $btn.closest('.waa-feedback');
+                var messageId = $feedback.data('message-id');
+                var rating = $btn.hasClass('waa-feedback-up') ? 1 : -1;
+
+                // If negative feedback, show feedback form
+                if (rating === -1) {
+                    showFeedbackForm(messageId, $feedback);
+                } else {
+                    submitFeedback(messageId, rating, '', '', $feedback);
+                }
+            });
+
+            function showFeedbackForm(messageId, $feedback) {
+                var $form = $('<div class="waa-feedback-form">' +
+                    '<select class="waa-feedback-category">' +
+                    '<option value="">Выберите проблему...</option>' +
+                    '<option value="wrong_product">Неправильный товар</option>' +
+                    '<option value="wrong_price">Неверная цена</option>' +
+                    '<option value="wrong_stock">Неверное наличие</option>' +
+                    '<option value="not_helpful">Не помогло</option>' +
+                    '<option value="other">Другое</option>' +
+                    '</select>' +
+                    '<textarea class="waa-feedback-text" placeholder="Опишите проблему..."></textarea>' +
+                    '<div class="waa-feedback-actions">' +
+                    '<button class="waa-feedback-submit">Отправить</button>' +
+                    '<button class="waa-feedback-cancel">Отмена</button>' +
+                    '</div>' +
+                    '</div>');
+
+                $feedback.after($form);
+                $feedback.hide();
+
+                $form.find('.waa-feedback-submit').on('click', function() {
+                    var category = $form.find('.waa-feedback-category').val();
+                    var text = $form.find('.waa-feedback-text').val();
+                    submitFeedback(messageId, -1, text, category, $feedback);
+                    $form.remove();
+                });
+
+                $form.find('.waa-feedback-cancel').on('click', function() {
+                    $form.remove();
+                    $feedback.show();
+                });
+            }
+
+            function submitFeedback(messageId, rating, text, category, $feedback) {
+                $.ajax({
+                    url: waaConfig.restUrl + 'feedback',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        message_id: messageId,
+                        rating: rating,
+                        feedback_text: text,
+                        category: category
+                    }),
+                    success: function() {
+                        $feedback.html('<span class="waa-feedback-thanks">Спасибо за отзыв!</span>');
+                    }
+                });
             }
 
             function scrollToBottom() {

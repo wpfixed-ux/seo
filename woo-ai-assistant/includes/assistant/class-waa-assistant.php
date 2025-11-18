@@ -66,8 +66,8 @@ class WAA_Assistant {
             );
         }
 
-        // Save to history
-        $this->save_to_history($session_id, $user_message, $response['message'], $results, $language);
+        // Save to history and get message ID
+        $message_id = $this->save_to_history($session_id, $user_message, $response['message'], $results, $language);
 
         // Extract product links from context
         $products = $this->extract_products($results);
@@ -75,6 +75,7 @@ class WAA_Assistant {
         return array(
             'success' => true,
             'message' => $response['message'],
+            'message_id' => $message_id,
             'products' => $products,
             'usage' => isset($response['usage']) ? $response['usage'] : null
         );
@@ -191,10 +192,11 @@ class WAA_Assistant {
 
     /**
      * Save conversation to history
+     * @return int|null Message ID
      */
     private function save_to_history($session_id, $user_message, $assistant_message, $results, $language) {
         if (empty($session_id)) {
-            return;
+            return null;
         }
 
         global $wpdb;
@@ -217,6 +219,8 @@ class WAA_Assistant {
             ),
             array('%s', '%s', '%s', '%s', '%s', '%s')
         );
+
+        return $wpdb->insert_id;
     }
 
     /**

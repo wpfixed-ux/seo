@@ -52,10 +52,16 @@ class WAA_Activator {
             assistant_message text NOT NULL,
             context_ids text,
             language varchar(10) DEFAULT 'ru',
+            rating tinyint(1) DEFAULT NULL,
+            feedback_text text,
+            feedback_category varchar(50) DEFAULT NULL,
+            reviewed tinyint(1) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY session_id (session_id),
-            KEY created_at (created_at)
+            KEY created_at (created_at),
+            KEY rating (rating),
+            KEY reviewed (reviewed)
         ) $charset_collate;";
 
         // Index status table

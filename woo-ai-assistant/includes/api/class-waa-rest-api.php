@@ -96,6 +96,35 @@ class WAA_REST_API {
                 return current_user_can('manage_options');
             },
         ));
+
+        // Feedback endpoint
+        register_rest_route($namespace, '/feedback', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'handle_feedback'),
+            'permission_callback' => '__return_true',
+            'args' => array(
+                'message_id' => array(
+                    'required' => true,
+                    'type' => 'integer',
+                ),
+                'rating' => array(
+                    'required' => true,
+                    'type' => 'integer',
+                    'minimum' => -1,
+                    'maximum' => 1,
+                ),
+                'feedback_text' => array(
+                    'required' => false,
+                    'type' => 'string',
+                    'sanitize_callback' => 'sanitize_textarea_field',
+                ),
+                'category' => array(
+                    'required' => false,
+                    'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ));
     }
 
     /**
@@ -146,6 +175,7 @@ class WAA_REST_API {
         return rest_ensure_response(array(
             'success' => true,
             'message' => $result['message'],
+            'message_id' => $result['message_id'],
             'products' => $result['products'],
             'session_id' => $session_id,
             'language' => $language,
@@ -235,6 +265,58 @@ class WAA_REST_API {
             'success' => true,
             'vectors' => $stats,
             'chats' => $chat_count,
+        ));
+    }
+
+    /**
+     * Handle feedback submission
+     */
+    public function handle_feedback($request) {
+        global $wpdb;
+
+        $message_id = $request->get_param('message_id');
+        $rating = $request->get_param('rating');
+        $feedback_text = $request->get_param('feedback_text');
+        $category = $request->get_param('category');
+
+        // Verify message exists
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}waa_chat_history WHERE id = %d",
+            $message_id
+        ));
+
+        if (!$exists) {
+            return new WP_Error(
+                'invalid_message',
+                __('Message not found', 'woo-ai-assistant'),
+                array('status' => 404)
+            );
+        }
+
+        // Update feedback
+        $result = $wpdb->update(
+            $wpdb->prefix . 'waa_chat_history',
+            array(
+                'rating' => $rating,
+                'feedback_text' => $feedback_text,
+                'feedback_category' => $category,
+            ),
+            array('id' => $message_id),
+            array('%d', '%s', '%s'),
+            array('%d')
+        );
+
+        if ($result === false) {
+            return new WP_Error(
+                'db_error',
+                __('Failed to save feedback', 'woo-ai-assistant'),
+                array('status' => 500)
+            );
+        }
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'message' => __('Feedback saved', 'woo-ai-assistant'),
         ));
     }
 
