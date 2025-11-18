@@ -12,6 +12,7 @@ class WAA_Indexer {
     private static $instance = null;
     private $vector_db;
     private $batch_size = 10;
+    private $max_content_length = 6000; // Safe limit for embeddings (~1500 tokens)
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -32,6 +33,24 @@ class WAA_Indexer {
         // Auto-index on product save
         add_action('save_post_product', array($this, 'index_single_product'), 10, 3);
         add_action('save_post', array($this, 'index_single_post'), 10, 3);
+    }
+
+    /**
+     * Truncate text to safe length for embeddings
+     */
+    private function truncate_text($text, $max_length = null) {
+        if ($max_length === null) {
+            $max_length = $this->max_content_length;
+        }
+
+        $text = wp_strip_all_tags($text);
+        $text = preg_replace('/\s+/', ' ', $text); // Normalize whitespace
+
+        if (mb_strlen($text) > $max_length) {
+            $text = mb_substr($text, 0, $max_length) . '...';
+        }
+
+        return trim($text);
     }
 
     /**
@@ -119,11 +138,11 @@ class WAA_Indexer {
         }
 
         if (!empty($short_description)) {
-            $content_parts[] = "Краткое описание: " . wp_strip_all_tags($short_description);
+            $content_parts[] = "Краткое описание: " . $this->truncate_text($short_description, 500);
         }
 
         if (!empty($description)) {
-            $content_parts[] = "Описание: " . wp_strip_all_tags($description);
+            $content_parts[] = "Описание: " . $this->truncate_text($description, 2000);
         }
 
         if (!empty($attributes)) {
@@ -139,6 +158,11 @@ class WAA_Indexer {
         }
 
         $content = implode("\n", $content_parts);
+
+        // Ensure total content doesn't exceed embedding limit
+        if (mb_strlen($content) > $this->max_content_length) {
+            $content = mb_substr($content, 0, $this->max_content_length) . '...';
+        }
 
         // Metadata for retrieval
         $metadata = array(
@@ -207,13 +231,18 @@ class WAA_Indexer {
             $content_parts[] = "Категории: " . implode(', ', $categories);
         }
 
-        $content_parts[] = "Содержание: " . mb_substr($content, 0, 2000);
+        $content_parts[] = "Содержание: " . $this->truncate_text($content, 2000);
 
         if (!empty($tags)) {
             $content_parts[] = "Теги: " . implode(', ', $tags);
         }
 
         $full_content = implode("\n", $content_parts);
+
+        // Ensure total content doesn't exceed embedding limit
+        if (mb_strlen($full_content) > $this->max_content_length) {
+            $full_content = mb_substr($full_content, 0, $this->max_content_length) . '...';
+        }
 
         $metadata = array(
             'title' => $title,
