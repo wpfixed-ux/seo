@@ -121,13 +121,18 @@ class WAA_Activator {
     }
 
     private static function schedule_cron() {
-        // Clear existing schedule
+        // Clear existing schedules
         $timestamp = wp_next_scheduled('waa_scheduled_reindex');
         if ($timestamp) {
             wp_unschedule_event($timestamp, 'waa_scheduled_reindex');
         }
 
-        // Schedule new daily event
+        $cleanup_timestamp = wp_next_scheduled('waa_scheduled_cleanup');
+        if ($cleanup_timestamp) {
+            wp_unschedule_event($cleanup_timestamp, 'waa_scheduled_cleanup');
+        }
+
+        // Schedule daily reindex event
         if (get_option('waa_auto_reindex', true)) {
             $time = get_option('waa_reindex_time', '06:00');
             $timezone = wp_timezone();
@@ -143,6 +148,17 @@ class WAA_Activator {
 
             wp_schedule_event($scheduled->getTimestamp(), 'daily', 'waa_scheduled_reindex');
         }
+
+        // Schedule weekly cleanup (every Sunday at 3 AM)
+        $timezone = wp_timezone();
+        $now = new DateTime('now', $timezone);
+        $cleanup_time = new DateTime('next sunday 03:00', $timezone);
+
+        if ($cleanup_time <= $now) {
+            $cleanup_time->modify('+1 week');
+        }
+
+        wp_schedule_event($cleanup_time->getTimestamp(), 'weekly', 'waa_scheduled_cleanup');
     }
 
     private static function create_upload_dir() {

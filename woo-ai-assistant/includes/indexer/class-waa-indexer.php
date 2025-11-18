@@ -34,8 +34,70 @@ class WAA_Indexer {
         add_action('save_post_product', array($this, 'index_single_product'), 10, 3);
         add_action('save_post', array($this, 'index_single_post'), 10, 3);
 
+        // Cleanup on product/post delete
+        add_action('before_delete_post', array($this, 'cleanup_deleted_post'));
+        add_action('wp_trash_post', array($this, 'cleanup_deleted_post'));
+
         // Scheduled reindexing
         add_action('waa_scheduled_reindex', array($this, 'scheduled_reindex'));
+
+        // Scheduled cleanup
+        add_action('waa_scheduled_cleanup', array($this, 'scheduled_cleanup'));
+    }
+
+    /**
+     * Cleanup embedding when post/product is deleted or trashed
+     */
+    public function cleanup_deleted_post($post_id) {
+        $post = get_post($post_id);
+        if (!$post) {
+            return;
+        }
+
+        if ($post->post_type === 'product') {
+            $this->vector_db->delete_embedding($post_id, 'product');
+        } else {
+            $post_types = get_option('waa_post_types', array('post', 'page'));
+            if (in_array($post->post_type, $post_types)) {
+                $this->vector_db->delete_embedding($post_id, 'post');
+            }
+        }
+    }
+
+    /**
+     * Scheduled cleanup task
+     * - Removes orphaned embeddings (products that no longer exist)
+     * - Cleans old chat history (older than 90 days)
+     */
+    public function scheduled_cleanup() {
+        global $wpdb;
+
+        // 1. Remove orphaned product embeddings
+        $orphaned_products = $wpdb->query(
+            "DELETE v FROM {$wpdb->prefix}waa_vectors v
+             LEFT JOIN {$wpdb->posts} p ON v.object_id = p.ID
+             WHERE v.object_type = 'product' AND p.ID IS NULL"
+        );
+
+        // 2. Remove orphaned post embeddings
+        $orphaned_posts = $wpdb->query(
+            "DELETE v FROM {$wpdb->prefix}waa_vectors v
+             LEFT JOIN {$wpdb->posts} p ON v.object_id = p.ID
+             WHERE v.object_type = 'post' AND p.ID IS NULL"
+        );
+
+        // 3. Clean old chat history (keep last 90 days)
+        $days_to_keep = apply_filters('waa_chat_history_days', 90);
+        $old_chats = $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->prefix}waa_chat_history
+             WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
+            $days_to_keep
+        ));
+
+        // Log results
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("WAA Cleanup: Removed $orphaned_products orphaned products, $orphaned_posts orphaned posts, $old_chats old chat messages");
+        }
     }
 
     /**
