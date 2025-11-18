@@ -101,6 +101,11 @@ class SAP_Core {
         require_once SAP_INCLUDES_DIR . 'exporters/class-sap-json-exporter.php';
 
         /**
+         * Generator classes
+         */
+        require_once SAP_INCLUDES_DIR . 'generators/class-sap-content-generator.php';
+
+        /**
          * Model classes
          */
         require_once SAP_INCLUDES_DIR . 'models/class-sap-project.php';
@@ -125,11 +130,24 @@ class SAP_Core {
         $this->loader->add_action('admin_menu', $plugin_admin, 'add_plugin_admin_menu');
         $this->loader->add_action('admin_init', $plugin_admin, 'register_settings');
 
+        // Register metaboxes for content generation
+        $this->loader->add_action('add_meta_boxes', $plugin_admin, 'register_metaboxes');
+        $this->loader->add_action('admin_init', $plugin_admin, 'register_term_metaboxes');
+
+        // Save metabox data
+        $this->loader->add_action('save_post', $plugin_admin, 'save_metabox_data');
+        $this->loader->add_action('created_term', $plugin_admin, 'save_term_meta', 10, 3);
+        $this->loader->add_action('edited_term', $plugin_admin, 'save_term_meta', 10, 3);
+
         // AJAX handlers
         $this->loader->add_action('wp_ajax_sap_analyze_competitor', $plugin_admin, 'ajax_analyze_competitor');
         $this->loader->add_action('wp_ajax_sap_analyze_keyword', $plugin_admin, 'ajax_analyze_keyword');
         $this->loader->add_action('wp_ajax_sap_generate_content_spec', $plugin_admin, 'ajax_generate_content_spec');
         $this->loader->add_action('wp_ajax_sap_import_keywords', $plugin_admin, 'ajax_import_keywords');
+
+        // Metabox AJAX handlers
+        $this->loader->add_action('wp_ajax_sap_generate_metabox_content', $plugin_admin, 'ajax_generate_metabox_content');
+        $this->loader->add_action('wp_ajax_sap_generate_term_content', $plugin_admin, 'ajax_generate_term_content');
     }
 
     /**

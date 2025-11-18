@@ -81,6 +81,24 @@ class SAP_Admin {
 
         add_submenu_page(
             'seo-analytics-pro',
+            __('Content Generator', 'seo-analytics-pro'),
+            __('Content Generator', 'seo-analytics-pro'),
+            'manage_options',
+            'seo-analytics-pro-generator',
+            array($this, 'display_generator_page')
+        );
+
+        add_submenu_page(
+            'seo-analytics-pro',
+            __('Generation Queue', 'seo-analytics-pro'),
+            __('Generation Queue', 'seo-analytics-pro'),
+            'manage_options',
+            'seo-analytics-pro-queue',
+            array($this, 'display_queue_page')
+        );
+
+        add_submenu_page(
+            'seo-analytics-pro',
             __('Settings', 'seo-analytics-pro'),
             __('Settings', 'seo-analytics-pro'),
             'manage_options',
@@ -571,6 +589,365 @@ keyword 3"></textarea>
     }
 
     /**
+     * Content Generator Page
+     */
+    public function display_generator_page() {
+        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'articles';
+        ?>
+        <div class="wrap sap-wrap">
+            <h1><?php _e('Content Generator', 'seo-analytics-pro'); ?></h1>
+
+            <nav class="nav-tab-wrapper">
+                <a href="?page=seo-analytics-pro-generator&tab=articles" class="nav-tab <?php echo $tab === 'articles' ? 'nav-tab-active' : ''; ?>">
+                    <?php _e('Articles', 'seo-analytics-pro'); ?>
+                </a>
+                <a href="?page=seo-analytics-pro-generator&tab=products" class="nav-tab <?php echo $tab === 'products' ? 'nav-tab-active' : ''; ?>">
+                    <?php _e('Products', 'seo-analytics-pro'); ?>
+                </a>
+                <a href="?page=seo-analytics-pro-generator&tab=categories" class="nav-tab <?php echo $tab === 'categories' ? 'nav-tab-active' : ''; ?>">
+                    <?php _e('Categories', 'seo-analytics-pro'); ?>
+                </a>
+                <a href="?page=seo-analytics-pro-generator&tab=pages" class="nav-tab <?php echo $tab === 'pages' ? 'nav-tab-active' : ''; ?>">
+                    <?php _e('Pages', 'seo-analytics-pro'); ?>
+                </a>
+            </nav>
+
+            <div class="sap-generator-content">
+                <?php
+                switch ($tab) {
+                    case 'products':
+                        $this->display_generator_products();
+                        break;
+                    case 'categories':
+                        $this->display_generator_categories();
+                        break;
+                    case 'pages':
+                        $this->display_generator_pages();
+                        break;
+                    default:
+                        $this->display_generator_articles();
+                }
+                ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Articles Generator Tab
+     */
+    private function display_generator_articles() {
+        ?>
+        <div class="sap-section">
+            <h2><?php _e('Generate Articles', 'seo-analytics-pro'); ?></h2>
+
+            <div class="sap-generator-options">
+                <div class="sap-form-section">
+                    <h3><?php _e('Select Content Specifications', 'seo-analytics-pro'); ?></h3>
+                    <p class="description"><?php _e('Choose technical specifications to generate articles from.', 'seo-analytics-pro'); ?></p>
+
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <td class="check-column"><input type="checkbox" id="select-all-specs"></td>
+                                <th><?php _e('Title', 'seo-analytics-pro'); ?></th>
+                                <th><?php _e('Keywords', 'seo-analytics-pro'); ?></th>
+                                <th><?php _e('Length', 'seo-analytics-pro'); ?></th>
+                                <th><?php _e('Status', 'seo-analytics-pro'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody id="specs-list">
+                            <tr>
+                                <td colspan="5" class="sap-empty-state">
+                                    <?php _e('No content specifications available. Create specs from keyword analysis first.', 'seo-analytics-pro'); ?>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="sap-form-section">
+                    <h3><?php _e('Generation Settings', 'seo-analytics-pro'); ?></h3>
+
+                    <div class="sap-form-row">
+                        <label for="gen-post-status"><?php _e('Post Status', 'seo-analytics-pro'); ?></label>
+                        <select id="gen-post-status" name="post_status">
+                            <option value="draft"><?php _e('Draft', 'seo-analytics-pro'); ?></option>
+                            <option value="pending"><?php _e('Pending Review', 'seo-analytics-pro'); ?></option>
+                            <option value="publish"><?php _e('Publish', 'seo-analytics-pro'); ?></option>
+                        </select>
+                    </div>
+
+                    <div class="sap-form-row">
+                        <label for="gen-category"><?php _e('Category', 'seo-analytics-pro'); ?></label>
+                        <?php
+                        wp_dropdown_categories(array(
+                            'id' => 'gen-category',
+                            'name' => 'category',
+                            'show_option_none' => __('Select category', 'seo-analytics-pro'),
+                            'option_none_value' => '',
+                            'hide_empty' => false
+                        ));
+                        ?>
+                    </div>
+
+                    <div class="sap-form-row">
+                        <label>
+                            <input type="checkbox" name="schedule_generation" value="1">
+                            <?php _e('Schedule generation (add to queue)', 'seo-analytics-pro'); ?>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sap-form-actions">
+                    <button type="button" class="button button-primary" id="generate-articles">
+                        <?php _e('Generate Selected Articles', 'seo-analytics-pro'); ?>
+                    </button>
+                    <button type="button" class="button" id="add-to-queue">
+                        <?php _e('Add to Queue', 'seo-analytics-pro'); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sap-section">
+            <h2><?php _e('Quick Article Generation', 'seo-analytics-pro'); ?></h2>
+            <p class="description"><?php _e('Generate a single article without a technical specification.', 'seo-analytics-pro'); ?></p>
+
+            <form id="quick-article-form" class="sap-form">
+                <div class="sap-form-row">
+                    <label for="quick-title"><?php _e('Article Title', 'seo-analytics-pro'); ?> *</label>
+                    <input type="text" id="quick-title" name="title" required>
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="quick-keywords"><?php _e('Keywords (comma separated)', 'seo-analytics-pro'); ?> *</label>
+                    <input type="text" id="quick-keywords" name="keywords" placeholder="keyword 1, keyword 2, keyword 3" required>
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="quick-length"><?php _e('Target Length (words)', 'seo-analytics-pro'); ?></label>
+                    <input type="number" id="quick-length" name="length" value="2000" min="500" max="10000">
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="quick-instructions"><?php _e('Additional Instructions', 'seo-analytics-pro'); ?></label>
+                    <textarea id="quick-instructions" name="instructions" rows="4" placeholder="<?php _e('Any specific requirements for the article...', 'seo-analytics-pro'); ?>"></textarea>
+                </div>
+
+                <button type="submit" class="button button-primary">
+                    <?php _e('Generate Article', 'seo-analytics-pro'); ?>
+                </button>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * Products Generator Tab
+     */
+    private function display_generator_products() {
+        ?>
+        <div class="sap-section">
+            <h2><?php _e('Generate Product Descriptions', 'seo-analytics-pro'); ?></h2>
+
+            <?php if (!class_exists('WooCommerce')): ?>
+            <div class="notice notice-warning">
+                <p><?php _e('WooCommerce is not installed. Product generation requires WooCommerce.', 'seo-analytics-pro'); ?></p>
+            </div>
+            <?php else: ?>
+
+            <div class="sap-form-section">
+                <h3><?php _e('Bulk Product Generation', 'seo-analytics-pro'); ?></h3>
+                <p class="description"><?php _e('Generate descriptions for multiple products at once.', 'seo-analytics-pro'); ?></p>
+
+                <div class="sap-form-row">
+                    <label for="product-category"><?php _e('Product Category', 'seo-analytics-pro'); ?></label>
+                    <?php
+                    wp_dropdown_categories(array(
+                        'id' => 'product-category',
+                        'name' => 'product_category',
+                        'taxonomy' => 'product_cat',
+                        'show_option_none' => __('All categories', 'seo-analytics-pro'),
+                        'option_none_value' => '',
+                        'hide_empty' => false
+                    ));
+                    ?>
+                </div>
+
+                <div class="sap-form-row">
+                    <label>
+                        <input type="checkbox" name="only_empty" value="1" checked>
+                        <?php _e('Only products without description', 'seo-analytics-pro'); ?>
+                    </label>
+                </div>
+
+                <button type="button" class="button button-primary" id="generate-product-descriptions">
+                    <?php _e('Generate Product Descriptions', 'seo-analytics-pro'); ?>
+                </button>
+            </div>
+
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Categories Generator Tab
+     */
+    private function display_generator_categories() {
+        ?>
+        <div class="sap-section">
+            <h2><?php _e('Generate Category Descriptions', 'seo-analytics-pro'); ?></h2>
+
+            <div class="sap-form-section">
+                <h3><?php _e('Select Categories', 'seo-analytics-pro'); ?></h3>
+
+                <div class="sap-form-row">
+                    <label for="category-taxonomy"><?php _e('Taxonomy', 'seo-analytics-pro'); ?></label>
+                    <select id="category-taxonomy" name="taxonomy">
+                        <option value="category"><?php _e('Post Categories', 'seo-analytics-pro'); ?></option>
+                        <?php if (class_exists('WooCommerce')): ?>
+                        <option value="product_cat"><?php _e('Product Categories', 'seo-analytics-pro'); ?></option>
+                        <?php endif; ?>
+                    </select>
+                </div>
+
+                <div class="sap-form-row">
+                    <label>
+                        <input type="checkbox" name="only_empty_cat" value="1" checked>
+                        <?php _e('Only categories without description', 'seo-analytics-pro'); ?>
+                    </label>
+                </div>
+
+                <button type="button" class="button button-primary" id="generate-category-descriptions">
+                    <?php _e('Generate Category Descriptions', 'seo-analytics-pro'); ?>
+                </button>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Pages Generator Tab
+     */
+    private function display_generator_pages() {
+        ?>
+        <div class="sap-section">
+            <h2><?php _e('Generate Page Content', 'seo-analytics-pro'); ?></h2>
+
+            <form id="generate-page-form" class="sap-form sap-form-large">
+                <div class="sap-form-row">
+                    <label for="page-title"><?php _e('Page Title', 'seo-analytics-pro'); ?> *</label>
+                    <input type="text" id="page-title" name="title" required>
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="page-type"><?php _e('Page Type', 'seo-analytics-pro'); ?></label>
+                    <select id="page-type" name="page_type">
+                        <option value="about"><?php _e('About Us', 'seo-analytics-pro'); ?></option>
+                        <option value="services"><?php _e('Services', 'seo-analytics-pro'); ?></option>
+                        <option value="contact"><?php _e('Contact', 'seo-analytics-pro'); ?></option>
+                        <option value="faq"><?php _e('FAQ', 'seo-analytics-pro'); ?></option>
+                        <option value="landing"><?php _e('Landing Page', 'seo-analytics-pro'); ?></option>
+                        <option value="custom"><?php _e('Custom', 'seo-analytics-pro'); ?></option>
+                    </select>
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="page-keywords"><?php _e('Keywords', 'seo-analytics-pro'); ?></label>
+                    <input type="text" id="page-keywords" name="keywords" placeholder="keyword 1, keyword 2">
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="page-instructions"><?php _e('Content Requirements', 'seo-analytics-pro'); ?></label>
+                    <textarea id="page-instructions" name="instructions" rows="4"></textarea>
+                </div>
+
+                <button type="submit" class="button button-primary">
+                    <?php _e('Generate Page', 'seo-analytics-pro'); ?>
+                </button>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * Generation Queue Page
+     */
+    public function display_queue_page() {
+        ?>
+        <div class="wrap sap-wrap">
+            <h1><?php _e('Generation Queue', 'seo-analytics-pro'); ?></h1>
+
+            <div class="sap-toolbar">
+                <div class="sap-filters">
+                    <select id="queue-status-filter">
+                        <option value=""><?php _e('All Statuses', 'seo-analytics-pro'); ?></option>
+                        <option value="pending"><?php _e('Pending', 'seo-analytics-pro'); ?></option>
+                        <option value="processing"><?php _e('Processing', 'seo-analytics-pro'); ?></option>
+                        <option value="completed"><?php _e('Completed', 'seo-analytics-pro'); ?></option>
+                        <option value="failed"><?php _e('Failed', 'seo-analytics-pro'); ?></option>
+                    </select>
+                    <button class="button"><?php _e('Filter', 'seo-analytics-pro'); ?></button>
+                </div>
+                <div class="sap-actions">
+                    <button class="button" id="process-queue"><?php _e('Process Queue Now', 'seo-analytics-pro'); ?></button>
+                    <button class="button" id="clear-completed"><?php _e('Clear Completed', 'seo-analytics-pro'); ?></button>
+                </div>
+            </div>
+
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <td class="check-column"><input type="checkbox"></td>
+                        <th><?php _e('Title', 'seo-analytics-pro'); ?></th>
+                        <th><?php _e('Type', 'seo-analytics-pro'); ?></th>
+                        <th><?php _e('Status', 'seo-analytics-pro'); ?></th>
+                        <th><?php _e('Scheduled', 'seo-analytics-pro'); ?></th>
+                        <th><?php _e('Actions', 'seo-analytics-pro'); ?></th>
+                    </tr>
+                </thead>
+                <tbody id="queue-list">
+                    <tr>
+                        <td colspan="6" class="sap-empty-state">
+                            <?php _e('No items in the generation queue.', 'seo-analytics-pro'); ?>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="sap-section" style="margin-top: 20px;">
+                <h2><?php _e('Schedule Settings', 'seo-analytics-pro'); ?></h2>
+
+                <div class="sap-form-row">
+                    <label>
+                        <input type="checkbox" name="enable_scheduled" value="1">
+                        <?php _e('Enable scheduled generation', 'seo-analytics-pro'); ?>
+                    </label>
+                    <p class="description"><?php _e('Automatically process queue items at scheduled times.', 'seo-analytics-pro'); ?></p>
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="generation-interval"><?php _e('Generation Interval', 'seo-analytics-pro'); ?></label>
+                    <select id="generation-interval" name="interval">
+                        <option value="hourly"><?php _e('Every Hour', 'seo-analytics-pro'); ?></option>
+                        <option value="twicedaily"><?php _e('Twice Daily', 'seo-analytics-pro'); ?></option>
+                        <option value="daily"><?php _e('Daily', 'seo-analytics-pro'); ?></option>
+                    </select>
+                </div>
+
+                <div class="sap-form-row">
+                    <label for="items-per-run"><?php _e('Items per Run', 'seo-analytics-pro'); ?></label>
+                    <input type="number" id="items-per-run" name="items_per_run" value="5" min="1" max="20">
+                    <p class="description"><?php _e('Number of items to generate in each scheduled run.', 'seo-analytics-pro'); ?></p>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * AJAX Handlers
      */
     public function ajax_analyze_competitor() {
@@ -660,5 +1037,550 @@ keyword 3"></textarea>
 
         // TODO: Implement keyword import
         wp_send_json_success(array('message' => __('Keywords imported', 'seo-analytics-pro')));
+    }
+
+    /**
+     * Register metaboxes for content generation
+     */
+    public function register_metaboxes() {
+        // Post metabox
+        add_meta_box(
+            'sap_content_generator',
+            __('SEO Content Generator', 'seo-analytics-pro'),
+            array($this, 'render_post_metabox'),
+            'post',
+            'side',
+            'high'
+        );
+
+        // Page metabox
+        add_meta_box(
+            'sap_content_generator',
+            __('SEO Content Generator', 'seo-analytics-pro'),
+            array($this, 'render_page_metabox'),
+            'page',
+            'side',
+            'high'
+        );
+
+        // WooCommerce product metabox
+        if (class_exists('WooCommerce')) {
+            add_meta_box(
+                'sap_content_generator',
+                __('SEO Content Generator', 'seo-analytics-pro'),
+                array($this, 'render_product_metabox'),
+                'product',
+                'side',
+                'high'
+            );
+        }
+    }
+
+    /**
+     * Register term meta boxes (for categories)
+     */
+    public function register_term_metaboxes() {
+        // Post categories
+        add_action('category_edit_form', array($this, 'render_category_metabox'), 10, 2);
+        add_action('category_add_form_fields', array($this, 'render_category_add_metabox'));
+
+        // WooCommerce product categories
+        if (class_exists('WooCommerce')) {
+            add_action('product_cat_edit_form', array($this, 'render_product_category_metabox'), 10, 2);
+            add_action('product_cat_add_form_fields', array($this, 'render_product_category_add_metabox'));
+        }
+    }
+
+    /**
+     * Render metabox for posts
+     */
+    public function render_post_metabox($post) {
+        wp_nonce_field('sap_metabox_nonce', 'sap_metabox_nonce');
+        ?>
+        <div class="sap-metabox">
+            <div class="sap-metabox-section">
+                <label for="sap-post-keywords">
+                    <strong><?php _e('Keywords', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <input type="text"
+                       id="sap-post-keywords"
+                       name="sap_keywords"
+                       class="widefat"
+                       placeholder="<?php _e('keyword 1, keyword 2', 'seo-analytics-pro'); ?>"
+                       value="<?php echo esc_attr(get_post_meta($post->ID, '_sap_keywords', true)); ?>">
+            </div>
+
+            <div class="sap-metabox-section">
+                <label for="sap-post-length">
+                    <strong><?php _e('Target Length', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <input type="number"
+                       id="sap-post-length"
+                       name="sap_length"
+                       class="widefat"
+                       min="500"
+                       max="10000"
+                       value="<?php echo esc_attr(get_post_meta($post->ID, '_sap_length', true) ?: '2000'); ?>">
+            </div>
+
+            <div class="sap-metabox-section">
+                <label for="sap-post-instructions">
+                    <strong><?php _e('Instructions', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <textarea id="sap-post-instructions"
+                          name="sap_instructions"
+                          class="widefat"
+                          rows="3"
+                          placeholder="<?php _e('Additional requirements...', 'seo-analytics-pro'); ?>"><?php echo esc_textarea(get_post_meta($post->ID, '_sap_instructions', true)); ?></textarea>
+            </div>
+
+            <div class="sap-metabox-section">
+                <label>
+                    <input type="checkbox" name="sap_replace_content" value="1">
+                    <?php _e('Replace existing content', 'seo-analytics-pro'); ?>
+                </label>
+            </div>
+
+            <div class="sap-metabox-actions">
+                <button type="button"
+                        class="button button-primary sap-generate-content"
+                        data-post-id="<?php echo $post->ID; ?>"
+                        data-content-type="article">
+                    <?php _e('Generate Content', 'seo-analytics-pro'); ?>
+                </button>
+                <span class="spinner"></span>
+            </div>
+
+            <div class="sap-metabox-result" style="display:none;"></div>
+        </div>
+
+        <style>
+            .sap-metabox-section { margin-bottom: 10px; }
+            .sap-metabox-section label { display: block; margin-bottom: 5px; }
+            .sap-metabox-actions { margin-top: 15px; }
+            .sap-metabox-actions .spinner { float: none; margin: 0 5px; }
+            .sap-metabox-result { margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 3px; }
+            .sap-metabox-result.success { background: #d4edda; color: #155724; }
+            .sap-metabox-result.error { background: #f8d7da; color: #721c24; }
+        </style>
+        <?php
+    }
+
+    /**
+     * Render metabox for pages
+     */
+    public function render_page_metabox($post) {
+        wp_nonce_field('sap_metabox_nonce', 'sap_metabox_nonce');
+        ?>
+        <div class="sap-metabox">
+            <div class="sap-metabox-section">
+                <label for="sap-page-type">
+                    <strong><?php _e('Page Type', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <select id="sap-page-type" name="sap_page_type" class="widefat">
+                    <option value="about"><?php _e('About Us', 'seo-analytics-pro'); ?></option>
+                    <option value="services"><?php _e('Services', 'seo-analytics-pro'); ?></option>
+                    <option value="contact"><?php _e('Contact', 'seo-analytics-pro'); ?></option>
+                    <option value="faq"><?php _e('FAQ', 'seo-analytics-pro'); ?></option>
+                    <option value="landing"><?php _e('Landing Page', 'seo-analytics-pro'); ?></option>
+                    <option value="custom"><?php _e('Custom', 'seo-analytics-pro'); ?></option>
+                </select>
+            </div>
+
+            <div class="sap-metabox-section">
+                <label for="sap-page-keywords">
+                    <strong><?php _e('Keywords', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <input type="text"
+                       id="sap-page-keywords"
+                       name="sap_keywords"
+                       class="widefat"
+                       placeholder="<?php _e('keyword 1, keyword 2', 'seo-analytics-pro'); ?>"
+                       value="<?php echo esc_attr(get_post_meta($post->ID, '_sap_keywords', true)); ?>">
+            </div>
+
+            <div class="sap-metabox-section">
+                <label for="sap-page-instructions">
+                    <strong><?php _e('Content Requirements', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <textarea id="sap-page-instructions"
+                          name="sap_instructions"
+                          class="widefat"
+                          rows="3"
+                          placeholder="<?php _e('Specific requirements for this page...', 'seo-analytics-pro'); ?>"><?php echo esc_textarea(get_post_meta($post->ID, '_sap_instructions', true)); ?></textarea>
+            </div>
+
+            <div class="sap-metabox-section">
+                <label>
+                    <input type="checkbox" name="sap_replace_content" value="1">
+                    <?php _e('Replace existing content', 'seo-analytics-pro'); ?>
+                </label>
+            </div>
+
+            <div class="sap-metabox-actions">
+                <button type="button"
+                        class="button button-primary sap-generate-content"
+                        data-post-id="<?php echo $post->ID; ?>"
+                        data-content-type="page">
+                    <?php _e('Generate Content', 'seo-analytics-pro'); ?>
+                </button>
+                <span class="spinner"></span>
+            </div>
+
+            <div class="sap-metabox-result" style="display:none;"></div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render metabox for WooCommerce products
+     */
+    public function render_product_metabox($post) {
+        wp_nonce_field('sap_metabox_nonce', 'sap_metabox_nonce');
+        ?>
+        <div class="sap-metabox">
+            <div class="sap-metabox-section">
+                <label for="sap-product-keywords">
+                    <strong><?php _e('Product Keywords', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <input type="text"
+                       id="sap-product-keywords"
+                       name="sap_keywords"
+                       class="widefat"
+                       placeholder="<?php _e('keyword 1, keyword 2', 'seo-analytics-pro'); ?>"
+                       value="<?php echo esc_attr(get_post_meta($post->ID, '_sap_keywords', true)); ?>">
+            </div>
+
+            <div class="sap-metabox-section">
+                <label for="sap-product-features">
+                    <strong><?php _e('Key Features', 'seo-analytics-pro'); ?></strong>
+                </label>
+                <textarea id="sap-product-features"
+                          name="sap_features"
+                          class="widefat"
+                          rows="3"
+                          placeholder="<?php _e('Main product features to highlight...', 'seo-analytics-pro'); ?>"><?php echo esc_textarea(get_post_meta($post->ID, '_sap_features', true)); ?></textarea>
+            </div>
+
+            <div class="sap-metabox-section">
+                <label>
+                    <input type="checkbox" name="sap_generate_short" value="1" checked>
+                    <?php _e('Generate short description', 'seo-analytics-pro'); ?>
+                </label>
+            </div>
+
+            <div class="sap-metabox-section">
+                <label>
+                    <input type="checkbox" name="sap_replace_content" value="1">
+                    <?php _e('Replace existing descriptions', 'seo-analytics-pro'); ?>
+                </label>
+            </div>
+
+            <div class="sap-metabox-actions">
+                <button type="button"
+                        class="button button-primary sap-generate-content"
+                        data-post-id="<?php echo $post->ID; ?>"
+                        data-content-type="product">
+                    <?php _e('Generate Description', 'seo-analytics-pro'); ?>
+                </button>
+                <span class="spinner"></span>
+            </div>
+
+            <div class="sap-metabox-result" style="display:none;"></div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render metabox for category edit form
+     */
+    public function render_category_metabox($term, $taxonomy) {
+        wp_nonce_field('sap_term_metabox_nonce', 'sap_term_metabox_nonce');
+        ?>
+        <h2><?php _e('SEO Content Generator', 'seo-analytics-pro'); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="sap-cat-keywords"><?php _e('Keywords', 'seo-analytics-pro'); ?></label>
+                </th>
+                <td>
+                    <input type="text"
+                           id="sap-cat-keywords"
+                           name="sap_keywords"
+                           class="regular-text"
+                           placeholder="<?php _e('keyword 1, keyword 2', 'seo-analytics-pro'); ?>"
+                           value="<?php echo esc_attr(get_term_meta($term->term_id, '_sap_keywords', true)); ?>">
+                    <p class="description"><?php _e('Keywords to target in the category description.', 'seo-analytics-pro'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="sap-cat-instructions"><?php _e('Instructions', 'seo-analytics-pro'); ?></label>
+                </th>
+                <td>
+                    <textarea id="sap-cat-instructions"
+                              name="sap_instructions"
+                              rows="3"
+                              class="large-text"
+                              placeholder="<?php _e('Additional requirements...', 'seo-analytics-pro'); ?>"><?php echo esc_textarea(get_term_meta($term->term_id, '_sap_instructions', true)); ?></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="sap_replace_description" value="1">
+                        <?php _e('Replace existing description', 'seo-analytics-pro'); ?>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"></th>
+                <td>
+                    <button type="button"
+                            class="button button-primary sap-generate-term-content"
+                            data-term-id="<?php echo $term->term_id; ?>"
+                            data-taxonomy="<?php echo esc_attr($taxonomy); ?>">
+                        <?php _e('Generate Description', 'seo-analytics-pro'); ?>
+                    </button>
+                    <span class="spinner" style="float: none;"></span>
+                    <div class="sap-term-result" style="display:none; margin-top: 10px;"></div>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Render metabox for category add form
+     */
+    public function render_category_add_metabox() {
+        ?>
+        <div class="form-field">
+            <label for="sap-new-cat-keywords"><?php _e('SEO Keywords', 'seo-analytics-pro'); ?></label>
+            <input type="text" id="sap-new-cat-keywords" name="sap_keywords" placeholder="<?php _e('keyword 1, keyword 2', 'seo-analytics-pro'); ?>">
+            <p><?php _e('Keywords for AI content generation.', 'seo-analytics-pro'); ?></p>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render metabox for WooCommerce product category edit form
+     */
+    public function render_product_category_metabox($term, $taxonomy) {
+        $this->render_category_metabox($term, $taxonomy);
+    }
+
+    /**
+     * Render metabox for WooCommerce product category add form
+     */
+    public function render_product_category_add_metabox() {
+        $this->render_category_add_metabox();
+    }
+
+    /**
+     * Save metabox data for posts/pages/products
+     */
+    public function save_metabox_data($post_id) {
+        // Verify nonce
+        if (!isset($_POST['sap_metabox_nonce']) || !wp_verify_nonce($_POST['sap_metabox_nonce'], 'sap_metabox_nonce')) {
+            return;
+        }
+
+        // Check autosave
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+
+        // Check permissions
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        // Save keywords
+        if (isset($_POST['sap_keywords'])) {
+            update_post_meta($post_id, '_sap_keywords', sanitize_text_field($_POST['sap_keywords']));
+        }
+
+        // Save length
+        if (isset($_POST['sap_length'])) {
+            update_post_meta($post_id, '_sap_length', absint($_POST['sap_length']));
+        }
+
+        // Save instructions
+        if (isset($_POST['sap_instructions'])) {
+            update_post_meta($post_id, '_sap_instructions', sanitize_textarea_field($_POST['sap_instructions']));
+        }
+
+        // Save features (for products)
+        if (isset($_POST['sap_features'])) {
+            update_post_meta($post_id, '_sap_features', sanitize_textarea_field($_POST['sap_features']));
+        }
+
+        // Save page type
+        if (isset($_POST['sap_page_type'])) {
+            update_post_meta($post_id, '_sap_page_type', sanitize_text_field($_POST['sap_page_type']));
+        }
+    }
+
+    /**
+     * Save term meta data
+     */
+    public function save_term_meta($term_id, $tt_id, $taxonomy) {
+        // Verify nonce for edit form
+        if (isset($_POST['sap_term_metabox_nonce']) && !wp_verify_nonce($_POST['sap_term_metabox_nonce'], 'sap_term_metabox_nonce')) {
+            return;
+        }
+
+        // Save keywords
+        if (isset($_POST['sap_keywords'])) {
+            update_term_meta($term_id, '_sap_keywords', sanitize_text_field($_POST['sap_keywords']));
+        }
+
+        // Save instructions
+        if (isset($_POST['sap_instructions'])) {
+            update_term_meta($term_id, '_sap_instructions', sanitize_textarea_field($_POST['sap_instructions']));
+        }
+    }
+
+    /**
+     * AJAX handler for generating content from metabox
+     */
+    public function ajax_generate_metabox_content() {
+        check_ajax_referer('sap_nonce', 'nonce');
+
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'seo-analytics-pro')));
+        }
+
+        $post_id = absint($_POST['post_id'] ?? 0);
+        $content_type = sanitize_text_field($_POST['content_type'] ?? 'article');
+        $keywords = sanitize_text_field($_POST['keywords'] ?? '');
+        $length = absint($_POST['length'] ?? 2000);
+        $instructions = sanitize_textarea_field($_POST['instructions'] ?? '');
+        $replace = !empty($_POST['replace']);
+
+        if (empty($post_id)) {
+            wp_send_json_error(array('message' => __('Post ID is required', 'seo-analytics-pro')));
+        }
+
+        $post = get_post($post_id);
+        if (!$post) {
+            wp_send_json_error(array('message' => __('Post not found', 'seo-analytics-pro')));
+        }
+
+        // Get content generator
+        $generator = new SAP_Content_Generator();
+
+        // Prepare spec data
+        $spec = array(
+            'title' => $post->post_title,
+            'primary_keyword' => !empty($keywords) ? explode(',', $keywords)[0] : $post->post_title,
+            'secondary_keywords' => array_map('trim', explode(',', $keywords)),
+            'word_count' => $length,
+            'additional_instructions' => $instructions,
+            'content_type' => $content_type
+        );
+
+        // Generate content based on type
+        $result = null;
+        switch ($content_type) {
+            case 'product':
+                $features = sanitize_textarea_field($_POST['features'] ?? '');
+                $spec['features'] = $features;
+                $spec['generate_short'] = !empty($_POST['generate_short']);
+                $result = $generator->generate_product($spec, $replace ? $post_id : 0);
+                break;
+
+            case 'page':
+                $page_type = sanitize_text_field($_POST['page_type'] ?? 'custom');
+                $spec['page_type'] = $page_type;
+                $result = $generator->generate_page($spec, $replace ? $post_id : 0);
+                break;
+
+            default: // article
+                $result = $generator->generate_article($spec, $replace ? $post_id : 0);
+        }
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        // Update post content if requested
+        if ($replace && !empty($result['content'])) {
+            wp_update_post(array(
+                'ID' => $post_id,
+                'post_content' => $result['content']
+            ));
+
+            // Update short description for products
+            if ($content_type === 'product' && !empty($result['short_description'])) {
+                update_post_meta($post_id, '_product_short_description', $result['short_description']);
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => __('Content generated successfully!', 'seo-analytics-pro'),
+            'content' => $result['content'] ?? '',
+            'post_id' => $result['post_id'] ?? $post_id
+        ));
+    }
+
+    /**
+     * AJAX handler for generating term content from metabox
+     */
+    public function ajax_generate_term_content() {
+        check_ajax_referer('sap_nonce', 'nonce');
+
+        if (!current_user_can('manage_categories')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'seo-analytics-pro')));
+        }
+
+        $term_id = absint($_POST['term_id'] ?? 0);
+        $taxonomy = sanitize_text_field($_POST['taxonomy'] ?? 'category');
+        $keywords = sanitize_text_field($_POST['keywords'] ?? '');
+        $instructions = sanitize_textarea_field($_POST['instructions'] ?? '');
+        $replace = !empty($_POST['replace']);
+
+        if (empty($term_id)) {
+            wp_send_json_error(array('message' => __('Term ID is required', 'seo-analytics-pro')));
+        }
+
+        $term = get_term($term_id, $taxonomy);
+        if (!$term || is_wp_error($term)) {
+            wp_send_json_error(array('message' => __('Term not found', 'seo-analytics-pro')));
+        }
+
+        // Get content generator
+        $generator = new SAP_Content_Generator();
+
+        // Prepare spec data
+        $spec = array(
+            'title' => $term->name,
+            'primary_keyword' => !empty($keywords) ? explode(',', $keywords)[0] : $term->name,
+            'secondary_keywords' => array_map('trim', explode(',', $keywords)),
+            'additional_instructions' => $instructions,
+            'taxonomy' => $taxonomy
+        );
+
+        // Generate category content
+        $result = $generator->generate_category($spec, $replace ? $term_id : 0);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        // Update term description if requested
+        if ($replace && !empty($result['content'])) {
+            wp_update_term($term_id, $taxonomy, array(
+                'description' => $result['content']
+            ));
+        }
+
+        wp_send_json_success(array(
+            'message' => __('Description generated successfully!', 'seo-analytics-pro'),
+            'content' => $result['content'] ?? '',
+            'term_id' => $term_id
+        ));
     }
 }
