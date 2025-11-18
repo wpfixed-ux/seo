@@ -108,6 +108,26 @@ class SAP_Admin {
             $sanitized['serp_api_provider'] = sanitize_text_field($input['serp_api_provider']);
         }
 
+        if (isset($input['serp_location'])) {
+            $sanitized['serp_location'] = sanitize_text_field($input['serp_location']);
+        }
+
+        if (isset($input['serp_language'])) {
+            $sanitized['serp_language'] = sanitize_text_field($input['serp_language']);
+        }
+
+        if (isset($input['serp_google_domain'])) {
+            $sanitized['serp_google_domain'] = sanitize_text_field($input['serp_google_domain']);
+        }
+
+        if (isset($input['max_serp_results'])) {
+            $sanitized['max_serp_results'] = absint($input['max_serp_results']);
+        }
+
+        if (isset($input['max_competitors'])) {
+            $sanitized['max_competitors'] = absint($input['max_competitors']);
+        }
+
         return $sanitized;
     }
 
@@ -454,6 +474,64 @@ keyword 3"></textarea>
                                value="<?php echo esc_attr($settings['serp_api_key'] ?? ''); ?>"
                                class="regular-text">
                         <p class="description"><?php _e('Required for fetching search engine results.', 'seo-analytics-pro'); ?></p>
+                    </div>
+                </div>
+
+                <div class="sap-form-section">
+                    <h2><?php _e('Region Settings', 'seo-analytics-pro'); ?></h2>
+                    <p class="description"><?php _e('Configure the target region for search results analysis.', 'seo-analytics-pro'); ?></p>
+
+                    <div class="sap-form-row">
+                        <label for="serp-location"><?php _e('Target Country', 'seo-analytics-pro'); ?></label>
+                        <select id="serp-location" name="sap_settings[serp_location]">
+                            <option value="Ukraine" <?php selected($settings['serp_location'] ?? 'Ukraine', 'Ukraine'); ?>>Ukraine</option>
+                            <option value="United States" <?php selected($settings['serp_location'] ?? '', 'United States'); ?>>United States</option>
+                            <option value="United Kingdom" <?php selected($settings['serp_location'] ?? '', 'United Kingdom'); ?>>United Kingdom</option>
+                            <option value="Germany" <?php selected($settings['serp_location'] ?? '', 'Germany'); ?>>Germany</option>
+                            <option value="France" <?php selected($settings['serp_location'] ?? '', 'France'); ?>>France</option>
+                            <option value="Poland" <?php selected($settings['serp_location'] ?? '', 'Poland'); ?>>Poland</option>
+                            <option value="Canada" <?php selected($settings['serp_location'] ?? '', 'Canada'); ?>>Canada</option>
+                            <option value="Australia" <?php selected($settings['serp_location'] ?? '', 'Australia'); ?>>Australia</option>
+                            <option value="Spain" <?php selected($settings['serp_location'] ?? '', 'Spain'); ?>>Spain</option>
+                            <option value="Italy" <?php selected($settings['serp_location'] ?? '', 'Italy'); ?>>Italy</option>
+                            <option value="Netherlands" <?php selected($settings['serp_location'] ?? '', 'Netherlands'); ?>>Netherlands</option>
+                            <option value="Brazil" <?php selected($settings['serp_location'] ?? '', 'Brazil'); ?>>Brazil</option>
+                        </select>
+                    </div>
+
+                    <div class="sap-form-row">
+                        <label for="serp-language"><?php _e('Search Language', 'seo-analytics-pro'); ?></label>
+                        <select id="serp-language" name="sap_settings[serp_language]">
+                            <option value="uk" <?php selected($settings['serp_language'] ?? 'uk', 'uk'); ?>>Українська (Ukrainian)</option>
+                            <option value="ru" <?php selected($settings['serp_language'] ?? '', 'ru'); ?>>Русский (Russian)</option>
+                            <option value="en" <?php selected($settings['serp_language'] ?? '', 'en'); ?>>English</option>
+                            <option value="de" <?php selected($settings['serp_language'] ?? '', 'de'); ?>>Deutsch (German)</option>
+                            <option value="fr" <?php selected($settings['serp_language'] ?? '', 'fr'); ?>>Français (French)</option>
+                            <option value="pl" <?php selected($settings['serp_language'] ?? '', 'pl'); ?>>Polski (Polish)</option>
+                            <option value="es" <?php selected($settings['serp_language'] ?? '', 'es'); ?>>Español (Spanish)</option>
+                            <option value="it" <?php selected($settings['serp_language'] ?? '', 'it'); ?>>Italiano (Italian)</option>
+                            <option value="nl" <?php selected($settings['serp_language'] ?? '', 'nl'); ?>>Nederlands (Dutch)</option>
+                            <option value="pt" <?php selected($settings['serp_language'] ?? '', 'pt'); ?>>Português (Portuguese)</option>
+                        </select>
+                    </div>
+
+                    <div class="sap-form-row">
+                        <label for="serp-google-domain"><?php _e('Google Domain', 'seo-analytics-pro'); ?></label>
+                        <select id="serp-google-domain" name="sap_settings[serp_google_domain]">
+                            <option value="google.com.ua" <?php selected($settings['serp_google_domain'] ?? 'google.com.ua', 'google.com.ua'); ?>>google.com.ua (Ukraine)</option>
+                            <option value="google.com" <?php selected($settings['serp_google_domain'] ?? '', 'google.com'); ?>>google.com (USA)</option>
+                            <option value="google.co.uk" <?php selected($settings['serp_google_domain'] ?? '', 'google.co.uk'); ?>>google.co.uk (UK)</option>
+                            <option value="google.de" <?php selected($settings['serp_google_domain'] ?? '', 'google.de'); ?>>google.de (Germany)</option>
+                            <option value="google.fr" <?php selected($settings['serp_google_domain'] ?? '', 'google.fr'); ?>>google.fr (France)</option>
+                            <option value="google.pl" <?php selected($settings['serp_google_domain'] ?? '', 'google.pl'); ?>>google.pl (Poland)</option>
+                            <option value="google.ca" <?php selected($settings['serp_google_domain'] ?? '', 'google.ca'); ?>>google.ca (Canada)</option>
+                            <option value="google.com.au" <?php selected($settings['serp_google_domain'] ?? '', 'google.com.au'); ?>>google.com.au (Australia)</option>
+                            <option value="google.es" <?php selected($settings['serp_google_domain'] ?? '', 'google.es'); ?>>google.es (Spain)</option>
+                            <option value="google.it" <?php selected($settings['serp_google_domain'] ?? '', 'google.it'); ?>>google.it (Italy)</option>
+                            <option value="google.nl" <?php selected($settings['serp_google_domain'] ?? '', 'google.nl'); ?>>google.nl (Netherlands)</option>
+                            <option value="google.com.br" <?php selected($settings['serp_google_domain'] ?? '', 'google.com.br'); ?>>google.com.br (Brazil)</option>
+                        </select>
+                        <p class="description"><?php _e('Select the Google domain for your target region.', 'seo-analytics-pro'); ?></p>
                     </div>
                 </div>
 

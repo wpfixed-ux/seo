@@ -35,12 +35,36 @@ class SAP_SERP {
     );
 
     /**
+     * Default location
+     *
+     * @var string
+     */
+    private $location;
+
+    /**
+     * Default language
+     *
+     * @var string
+     */
+    private $language;
+
+    /**
+     * Google domain
+     *
+     * @var string
+     */
+    private $google_domain;
+
+    /**
      * Constructor
      */
     public function __construct() {
         $settings = get_option('sap_settings', array());
         $this->provider = $settings['serp_api_provider'] ?? 'serpapi';
         $this->api_key = $settings['serp_api_key'] ?? '';
+        $this->location = $settings['serp_location'] ?? 'Ukraine';
+        $this->language = $settings['serp_language'] ?? 'uk';
+        $this->google_domain = $settings['serp_google_domain'] ?? 'google.com.ua';
     }
 
     /**
@@ -56,8 +80,9 @@ class SAP_SERP {
         }
 
         $defaults = array(
-            'location' => 'United States',
-            'language' => 'en',
+            'location' => $this->location,
+            'language' => $this->language,
+            'google_domain' => $this->google_domain,
             'num_results' => 20,
             'device' => 'desktop'
         );
@@ -91,6 +116,8 @@ class SAP_SERP {
             'q' => $keyword,
             'location' => $options['location'],
             'hl' => $options['language'],
+            'gl' => $this->get_country_code($options['location']),
+            'google_domain' => $options['google_domain'],
             'num' => $options['num_results'],
             'device' => $options['device']
         );
@@ -358,6 +385,32 @@ class SAP_SERP {
             'suggestions' => array(),
             'message' => 'Keyword suggestions feature requires additional API integration'
         );
+    }
+
+    /**
+     * Get country code from location name
+     *
+     * @param string $location Location name
+     * @return string Country code
+     */
+    private function get_country_code($location) {
+        $codes = array(
+            'Ukraine' => 'ua',
+            'United States' => 'us',
+            'United Kingdom' => 'uk',
+            'Germany' => 'de',
+            'France' => 'fr',
+            'Poland' => 'pl',
+            'Russia' => 'ru',
+            'Canada' => 'ca',
+            'Australia' => 'au',
+            'Spain' => 'es',
+            'Italy' => 'it',
+            'Netherlands' => 'nl',
+            'Brazil' => 'br',
+        );
+
+        return $codes[$location] ?? 'ua';
     }
 
     /**
