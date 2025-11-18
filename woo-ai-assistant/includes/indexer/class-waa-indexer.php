@@ -11,7 +11,7 @@ class WAA_Indexer {
 
     private static $instance = null;
     private $vector_db;
-    private $batch_size = 10;
+    private $batch_size = 50; // Increased for faster indexing
     private $max_content_length = 6000; // Safe limit for embeddings (~1500 tokens)
 
     public static function get_instance() {

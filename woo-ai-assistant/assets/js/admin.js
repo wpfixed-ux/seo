@@ -28,6 +28,9 @@
         var $progressText = $('.waa-progress-text');
         var $log = $('.waa-index-log');
         var isIndexing = false;
+        var retryCount = 0;
+        var maxRetries = 3;
+        var batchDelay = 100; // Reduced delay for faster indexing
 
         $startBtn.on('click', function() {
             if (isIndexing) return;
@@ -67,11 +70,14 @@
             $.ajax({
                 url: waaAdmin.ajaxUrl,
                 method: 'POST',
+                timeout: 60000, // 60 second timeout for large batches
                 data: {
                     action: 'waa_index_batch',
                     nonce: waaAdmin.nonce
                 },
                 success: function(response) {
+                    retryCount = 0; // Reset retry counter on success
+
                     if (response.success) {
                         var data = response.data;
                         var total = data.total_products + data.total_posts;
@@ -89,20 +95,29 @@
                         }
 
                         if (data.is_complete) {
-                            log('Indexing complete!');
+                            log('Индексация завершена! Проиндексировано: ' + indexed + ' элементов');
+                            $progressFill.css('width', '100%');
                             resetIndexing();
                         } else {
-                            // Process next batch
-                            setTimeout(processBatch, 500);
+                            // Process next batch with reduced delay
+                            setTimeout(processBatch, batchDelay);
                         }
                     } else {
                         log('Error: ' + response.data, 'error');
                         resetIndexing();
                     }
                 },
-                error: function() {
-                    log('Network error', 'error');
-                    resetIndexing();
+                error: function(xhr, status, error) {
+                    retryCount++;
+
+                    if (retryCount <= maxRetries) {
+                        var delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 2s, 4s, 8s
+                        log('Ошибка сети, повтор через ' + (delay/1000) + ' сек... (попытка ' + retryCount + '/' + maxRetries + ')', 'error');
+                        setTimeout(processBatch, delay);
+                    } else {
+                        log('Не удалось завершить индексацию после ' + maxRetries + ' попыток: ' + error, 'error');
+                        resetIndexing();
+                    }
                 }
             });
         }
