@@ -43,6 +43,15 @@ class WCPMP_Admin {
 
         add_submenu_page(
             'wcpmp-dashboard',
+            __('Import', 'wc-product-manager-pro'),
+            __('Import', 'wc-product-manager-pro'),
+            'manage_wcpmp_products',
+            'wcpmp-import',
+            array($this, 'render_import')
+        );
+
+        add_submenu_page(
+            'wcpmp-dashboard',
             __('Stores', 'wc-product-manager-pro'),
             __('Stores', 'wc-product-manager-pro'),
             'manage_wcpmp_stores',
@@ -195,6 +204,13 @@ class WCPMP_Admin {
      */
     public function render_products() {
         include WCPMP_PLUGIN_DIR . 'templates/admin/products.php';
+    }
+
+    /**
+     * Render import page
+     */
+    public function render_import() {
+        include WCPMP_PLUGIN_DIR . 'templates/admin/import.php';
     }
 
     /**
