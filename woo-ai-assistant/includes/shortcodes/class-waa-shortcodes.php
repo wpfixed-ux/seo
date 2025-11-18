@@ -29,13 +29,62 @@ class WAA_Shortcodes {
     }
 
     /**
+     * Detect current site language for multilingual sites
+     * Supports: WPML, Polylang, TranslatePress, qTranslate-X
+     */
+    private function get_current_language() {
+        $supported = get_option('waa_languages', array('ru', 'uk'));
+        $default = get_option('waa_primary_language', 'ru');
+        $detected = null;
+
+        // WPML
+        if (defined('ICL_LANGUAGE_CODE')) {
+            $detected = ICL_LANGUAGE_CODE;
+        }
+        // Polylang
+        elseif (function_exists('pll_current_language')) {
+            $detected = pll_current_language();
+        }
+        // TranslatePress
+        elseif (class_exists('TRP_Translate_Press')) {
+            global $TRP_LANGUAGE;
+            if (!empty($TRP_LANGUAGE)) {
+                $detected = substr($TRP_LANGUAGE, 0, 2); // 'uk_UA' -> 'uk'
+            }
+        }
+        // qTranslate-X
+        elseif (function_exists('qtranxf_getLanguage')) {
+            $detected = qtranxf_getLanguage();
+        }
+        // WordPress locale fallback
+        else {
+            $locale = get_locale();
+            // Map common locales to language codes
+            $locale_map = array(
+                'ru_RU' => 'ru',
+                'uk' => 'uk',
+                'uk_UA' => 'uk',
+                'ru' => 'ru',
+            );
+            $detected = isset($locale_map[$locale]) ? $locale_map[$locale] : substr($locale, 0, 2);
+        }
+
+        // Return detected language if supported, otherwise default
+        if ($detected && in_array($detected, $supported)) {
+            return $detected;
+        }
+
+        return $default;
+    }
+
+    /**
      * Render search bar shortcode
      * [waa_search placeholder="Поиск товаров..." language="ru"]
      */
     public function render_search($atts) {
         $atts = shortcode_atts(array(
             'placeholder' => __('Умный поиск товаров...', 'woo-ai-assistant'),
-            'language' => get_option('waa_primary_language', 'ru'),
+            'language' => $this->get_current_language(),
             'class' => '',
         ), $atts);
 
@@ -66,7 +115,7 @@ class WAA_Shortcodes {
     public function render_chat($atts) {
         $atts = shortcode_atts(array(
             'title' => __('AI Консультант', 'woo-ai-assistant'),
-            'language' => get_option('waa_primary_language', 'ru'),
+            'language' => $this->get_current_language(),
             'height' => '400',
             'class' => '',
         ), $atts);
@@ -115,7 +164,7 @@ class WAA_Shortcodes {
     public function render_floating($atts) {
         $atts = shortcode_atts(array(
             'position' => get_option('waa_floating_button_position', 'bottom-right'),
-            'language' => get_option('waa_primary_language', 'ru'),
+            'language' => $this->get_current_language(),
             'title' => __('AI Консультант', 'woo-ai-assistant'),
         ), $atts);
 
