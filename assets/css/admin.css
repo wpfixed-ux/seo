@@ -1,55 +1,270 @@
 /* SEO Analytics Pro - Admin Styles */
-.sap-container {
+
+/* General */
+.sap-wrap {
     max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
+}
+
+/* Cards Grid */
+.sap-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
 .sap-card {
     background: #fff;
     border: 1px solid #ccd0d4;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
-    margin-bottom: 20px;
     padding: 20px;
+    border-radius: 4px;
 }
 
-.sap-header {
-    border-bottom: 1px solid #e5e5e5;
+.sap-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.sap-stat {
+    font-size: 36px;
+    font-weight: 600;
+    color: #2271b1;
+    margin-bottom: 15px;
+}
+
+.sap-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sap-status span {
+    font-size: 13px;
+}
+
+.status-ok {
+    color: #00a32a;
+}
+
+.status-error {
+    color: #d63638;
+}
+
+/* Sections */
+.sap-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
     margin-bottom: 20px;
-    padding-bottom: 15px;
+    border-radius: 4px;
 }
 
-.sap-button-primary {
-    background: #2271b1;
-    border-color: #2271b1;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 3px;
-    cursor: pointer;
+.sap-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
 }
 
-.sap-button-primary:hover {
-    background: #135e96;
-    border-color: #135e96;
+/* Forms */
+.sap-form {
+    max-width: 600px;
 }
 
-.sap-table {
-    width: 100%;
-    border-collapse: collapse;
+.sap-form-large {
+    max-width: 800px;
 }
 
-.sap-table th,
-.sap-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #e5e5e5;
+.sap-form-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
 }
 
-.sap-table th {
-    background: #f6f7f7;
+.sap-form-section h2 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.sap-form-row {
+    margin-bottom: 15px;
+}
+
+.sap-form-row label {
+    display: block;
+    margin-bottom: 5px;
     font-weight: 600;
 }
 
+.sap-form-row input[type="text"],
+.sap-form-row input[type="url"],
+.sap-form-row input[type="password"],
+.sap-form-row input[type="number"],
+.sap-form-row input[type="email"],
+.sap-form-row select,
+.sap-form-row textarea {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.sap-form-row textarea {
+    max-width: 100%;
+    min-height: 120px;
+}
+
+.sap-form-row .description {
+    margin-top: 5px;
+    color: #646970;
+    font-size: 13px;
+}
+
+.sap-form-actions {
+    padding: 20px;
+    background: #f6f7f7;
+    margin: -20px;
+    margin-top: 20px;
+    border-top: 1px solid #ccd0d4;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sap-help {
+    font-weight: normal;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.sap-help a {
+    text-decoration: none;
+}
+
+/* Radio Cards */
+.sap-radio-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.sap-radio-card {
+    display: block;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.sap-radio-card:hover {
+    border-color: #2271b1;
+}
+
+.sap-radio-card input[type="radio"] {
+    margin-right: 10px;
+}
+
+.sap-radio-card input[type="radio"]:checked + .sap-radio-content {
+    color: #2271b1;
+}
+
+.sap-radio-content strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.sap-radio-content p {
+    margin: 0;
+    font-size: 13px;
+    color: #646970;
+}
+
+/* Steps */
+.sap-steps {
+    padding-left: 20px;
+}
+
+.sap-steps li {
+    margin-bottom: 15px;
+    padding-left: 10px;
+}
+
+.sap-steps li strong {
+    display: block;
+    color: #1d2327;
+}
+
+.sap-steps li p {
+    margin: 5px 0 0 0;
+    color: #646970;
+}
+
+/* Toolbar */
+.sap-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 0;
+}
+
+.sap-filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sap-filters select {
+    min-width: 150px;
+}
+
+.sap-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Tables */
+.sap-table {
+    margin-top: 0;
+}
+
+.sap-empty-state {
+    text-align: center;
+    padding: 40px 20px !important;
+    color: #646970;
+}
+
+.sap-empty-state h3 {
+    margin-bottom: 10px;
+}
+
+.sap-empty-state p {
+    margin-bottom: 15px;
+}
+
+/* Results */
+.sap-results {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f6f7f7;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.sap-results pre {
+    background: #fff;
+    padding: 10px;
+    overflow-x: auto;
+    font-size: 12px;
+}
+
+/* Loading */
 .sap-loading {
     text-align: center;
     padding: 40px;
@@ -63,9 +278,89 @@
     border: 3px solid #2271b1;
     border-radius: 50%;
     border-top-color: transparent;
-    animation: spin 1s linear infinite;
+    animation: sap-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes sap-spin {
     to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .sap-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .sap-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .sap-form-row input,
+    .sap-form-row select,
+    .sap-form-row textarea {
+        max-width: 100%;
+    }
+}
+
+/* Specs Grid */
+.sap-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.sap-spec-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.sap-spec-card h4 {
+    margin: 0 0 10px 0;
+}
+
+.sap-spec-meta {
+    font-size: 12px;
+    color: #646970;
+    margin-bottom: 10px;
+}
+
+.sap-spec-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+/* Badges */
+.sap-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.sap-badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.sap-badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.sap-badge-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.sap-badge-danger {
+    background: #f8d7da;
+    color: #721c24;
 }
