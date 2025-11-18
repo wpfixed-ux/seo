@@ -13,6 +13,7 @@ class WAA_Activator {
         self::create_tables();
         self::set_default_options();
         self::create_upload_dir();
+        self::schedule_cron();
 
         // Flush rewrite rules
         flush_rewrite_rules();
@@ -102,12 +103,39 @@ class WAA_Activator {
             'waa_chat_theme' => 'light',
             'waa_index_posts' => true,
             'waa_post_types' => array('post', 'page'),
+            'waa_auto_reindex' => true,
+            'waa_reindex_time' => '06:00',
         );
 
         foreach ($defaults as $key => $value) {
             if (get_option($key) === false) {
                 update_option($key, $value);
             }
+        }
+    }
+
+    private static function schedule_cron() {
+        // Clear existing schedule
+        $timestamp = wp_next_scheduled('waa_scheduled_reindex');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'waa_scheduled_reindex');
+        }
+
+        // Schedule new daily event
+        if (get_option('waa_auto_reindex', true)) {
+            $time = get_option('waa_reindex_time', '06:00');
+            $timezone = wp_timezone();
+
+            // Calculate next run time
+            $now = new DateTime('now', $timezone);
+            $scheduled = new DateTime($time, $timezone);
+
+            // If time already passed today, schedule for tomorrow
+            if ($scheduled <= $now) {
+                $scheduled->modify('+1 day');
+            }
+
+            wp_schedule_event($scheduled->getTimestamp(), 'daily', 'waa_scheduled_reindex');
         }
     }
 

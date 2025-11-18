@@ -49,6 +49,38 @@ class WAA_Settings {
         // Indexing Settings
         register_setting('waa_settings', 'waa_index_posts');
         register_setting('waa_settings', 'waa_post_types');
+        register_setting('waa_settings', 'waa_auto_reindex');
+        register_setting('waa_settings', 'waa_reindex_time');
+
+        // Reschedule cron when time changes
+        add_action('update_option_waa_reindex_time', array($this, 'reschedule_cron'));
+        add_action('update_option_waa_auto_reindex', array($this, 'reschedule_cron'));
+    }
+
+    /**
+     * Reschedule cron when settings change
+     */
+    public function reschedule_cron() {
+        // Clear existing schedule
+        $timestamp = wp_next_scheduled('waa_scheduled_reindex');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'waa_scheduled_reindex');
+        }
+
+        // Schedule new event
+        if (get_option('waa_auto_reindex', true)) {
+            $time = get_option('waa_reindex_time', '06:00');
+            $timezone = wp_timezone();
+
+            $now = new DateTime('now', $timezone);
+            $scheduled = new DateTime($time, $timezone);
+
+            if ($scheduled <= $now) {
+                $scheduled->modify('+1 day');
+            }
+
+            wp_schedule_event($scheduled->getTimestamp(), 'daily', 'waa_scheduled_reindex');
+        }
     }
 
     public function render_page() {
@@ -271,6 +303,34 @@ class WAA_Settings {
                                                <?php checked(in_array('page', $post_types)); ?>>
                                         <?php _e('Страницы', 'woo-ai-assistant'); ?>
                                     </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><?php _e('Авто-переиндексация', 'woo-ai-assistant'); ?></th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="waa_auto_reindex" value="1"
+                                               <?php checked(get_option('waa_auto_reindex', true), '1'); ?>>
+                                        <?php _e('Автоматически обновлять индекс ежедневно', 'woo-ai-assistant'); ?>
+                                    </label>
+                                    <p class="description"><?php _e('Переиндексирует только измененные товары (цена, наличие, описание)', 'woo-ai-assistant'); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><?php _e('Время переиндексации', 'woo-ai-assistant'); ?></th>
+                                <td>
+                                    <input type="time" name="waa_reindex_time"
+                                           value="<?php echo esc_attr(get_option('waa_reindex_time', '06:00')); ?>">
+                                    <p class="description"><?php _e('Время по часовому поясу сайта', 'woo-ai-assistant'); ?></p>
+                                    <?php
+                                    $next_run = wp_next_scheduled('waa_scheduled_reindex');
+                                    if ($next_run) {
+                                        $timezone = wp_timezone();
+                                        $next_date = new DateTime('@' . $next_run);
+                                        $next_date->setTimezone($timezone);
+                                        echo '<p class="description"><strong>' . __('Следующий запуск:', 'woo-ai-assistant') . '</strong> ' . $next_date->format('d.m.Y H:i') . '</p>';
+                                    }
+                                    ?>
                                 </td>
                             </tr>
                         </table>

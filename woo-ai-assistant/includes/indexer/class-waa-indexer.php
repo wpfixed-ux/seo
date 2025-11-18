@@ -33,6 +33,78 @@ class WAA_Indexer {
         // Auto-index on product save
         add_action('save_post_product', array($this, 'index_single_product'), 10, 3);
         add_action('save_post', array($this, 'index_single_post'), 10, 3);
+
+        // Scheduled reindexing
+        add_action('waa_scheduled_reindex', array($this, 'scheduled_reindex'));
+    }
+
+    /**
+     * Scheduled automatic reindexing
+     * Runs via WP Cron at configured time (e.g., 6:00 AM)
+     */
+    public function scheduled_reindex() {
+        if (!get_option('waa_auto_reindex', true)) {
+            return;
+        }
+
+        global $wpdb;
+        $ai_provider = WAA_Core::get_ai_provider();
+        $languages = get_option('waa_languages', array('ru'));
+
+        // Get all published products
+        $products = $wpdb->get_col(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'product' AND post_status = 'publish'"
+        );
+
+        $updated = 0;
+        $errors = array();
+
+        foreach ($products as $product_id) {
+            foreach ($languages as $language) {
+                $content_data = $this->get_product_content($product_id, $language);
+
+                if (!$content_data) {
+                    continue;
+                }
+
+                // Only reindex if content changed (price, stock, description)
+                if (!$this->vector_db->needs_reindex($product_id, 'product', $content_data['hash'], $language)) {
+                    continue;
+                }
+
+                $embedding_result = $ai_provider->get_embedding($content_data['content']);
+
+                if (!$embedding_result['success']) {
+                    $errors[] = "Product $product_id: " . $embedding_result['error'];
+                    continue;
+                }
+
+                $this->vector_db->store_embedding(
+                    $product_id,
+                    'product',
+                    $embedding_result['embedding'],
+                    $content_data['metadata'],
+                    $language
+                );
+
+                $updated++;
+
+                // Small delay to avoid API rate limits
+                usleep(100000); // 100ms
+            }
+        }
+
+        // Update last index date
+        $wpdb->update(
+            $wpdb->prefix . 'waa_index_status',
+            array('last_index_date' => current_time('mysql')),
+            array('id' => 1)
+        );
+
+        // Log results
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("WAA Scheduled Reindex: Updated $updated products. Errors: " . count($errors));
+        }
     }
 
     /**
