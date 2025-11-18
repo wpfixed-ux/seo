@@ -1,0 +1,206 @@
+/* WC Product Manager Pro - Admin Styles */
+
+/* Dashboard Widgets */
+.wcpmp-dashboard-widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.wcpmp-widget {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.wcpmp-widget h2 {
+    margin: 0 0 15px;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wcpmp-widget-wide {
+    grid-column: 1 / -1;
+}
+
+/* Stats Grid */
+.wcpmp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+}
+
+.wcpmp-stat {
+    text-align: center;
+    padding: 10px;
+    background: #f6f7f7;
+    border-radius: 4px;
+}
+
+.wcpmp-stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.wcpmp-stat-label {
+    display: block;
+    font-size: 11px;
+    color: #646970;
+    margin-top: 5px;
+}
+
+.wcpmp-stat-value.wcpmp-success { color: #00a32a; }
+.wcpmp-stat-value.wcpmp-warning { color: #dba617; }
+.wcpmp-stat-value.wcpmp-danger { color: #d63638; }
+
+.wcpmp-total-value {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dcdcde;
+    text-align: right;
+}
+
+/* Status badges */
+.wcpmp-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.wcpmp-status-pending { background: #f0f0f1; color: #50575e; }
+.wcpmp-status-processing { background: #fff8e5; color: #996800; }
+.wcpmp-status-completed { background: #edfaef; color: #007017; }
+.wcpmp-status-draft { background: #f0f0f1; color: #50575e; }
+.wcpmp-status-sent { background: #e7f5fe; color: #0073aa; }
+.wcpmp-status-scheduled { background: #f0f6fc; color: #2271b1; }
+
+.wcpmp-status-active { color: #00a32a; }
+.wcpmp-status-inactive { color: #d63638; }
+
+/* Low stock indicator */
+.wcpmp-low-stock {
+    color: #d63638;
+    font-weight: 600;
+}
+
+/* Cards */
+.wcpmp-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.wcpmp-card h3 {
+    margin: 0 0 15px;
+}
+
+/* Inventory grid */
+.wcpmp-inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* CRM Stats */
+.wcpmp-crm-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.wcpmp-stat-box {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+
+.wcpmp-stat-number {
+    display: block;
+    font-size: 32px;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+/* AI Badge */
+.wcpmp-ai-badge {
+    display: inline-block;
+    background: #9b59b6;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* Products table */
+.in-stock { color: #00a32a; }
+.low-stock { color: #dba617; }
+.out-of-stock { color: #d63638; }
+
+.seo-yes { color: #00a32a; }
+.seo-no { color: #d63638; }
+
+/* Settings tabs */
+.wcpmp-settings-tab {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+    padding: 20px;
+}
+
+/* Telegram status */
+.wcpmp-telegram-status {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.wcpmp-telegram-status h2 {
+    margin-top: 0;
+}
+
+/* Tables in widgets */
+.wcpmp-widget .widefat {
+    margin: 0 -20px -20px;
+    width: calc(100% + 40px);
+    border: 0;
+    border-top: 1px solid #dcdcde;
+}
+
+.wcpmp-widget .widefat th,
+.wcpmp-widget .widefat td {
+    padding: 10px 15px;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .wcpmp-dashboard-widgets {
+        grid-template-columns: 1fr;
+    }
+
+    .wcpmp-crm-stats {
+        flex-direction: column;
+    }
+
+    .wcpmp-inventory-grid {
+        grid-template-columns: 1fr;
+    }
+}
