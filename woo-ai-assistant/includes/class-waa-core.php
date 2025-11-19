@@ -96,6 +96,8 @@ class WAA_Core {
         wp_localize_script('waa-public', 'waaConfig', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'restUrl' => rest_url('waa/v1/'),
+            'wcAjaxUrl' => WC()->ajax_url(),
+            'cartUrl' => wc_get_cart_url(),
             'nonce' => wp_create_nonce('waa_nonce'),
             'i18n' => array(
                 'placeholder' => __('Задайте вопрос о товарах...', 'woo-ai-assistant'),
@@ -103,6 +105,11 @@ class WAA_Core {
                 'thinking' => __('Думаю...', 'woo-ai-assistant'),
                 'error' => __('Произошла ошибка. Попробуйте снова.', 'woo-ai-assistant'),
                 'welcome' => __('Здравствуйте! Я AI-консультант. Чем могу помочь с выбором товара?', 'woo-ai-assistant'),
+                'addToCart' => __('В корзину', 'woo-ai-assistant'),
+                'adding' => __('Добавляем...', 'woo-ai-assistant'),
+                'added' => __('Добавлено!', 'woo-ai-assistant'),
+                'viewCart' => __('Смотреть корзину', 'woo-ai-assistant'),
+                'outOfStock' => __('Нет в наличии', 'woo-ai-assistant'),
             )
         ));
     }

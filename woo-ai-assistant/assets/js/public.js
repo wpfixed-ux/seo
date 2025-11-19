@@ -176,16 +176,30 @@
                 if (products && products.length > 0) {
                     var $cards = $('<div class="waa-product-cards"></div>');
                     products.slice(0, 3).forEach(function(product) {
-                        var $card = $('<a href="' + product.url + '" class="waa-product-card" target="_blank"></a>');
+                        var $card = $('<div class="waa-product-card"></div>');
+
+                        // Product link with image and info
+                        var $link = $('<a href="' + product.url + '" class="waa-product-card-link" target="_blank"></a>');
                         if (product.image) {
-                            $card.append('<img src="' + product.image + '" alt="" class="waa-product-card-image">');
+                            $link.append('<img src="' + product.image + '" alt="" class="waa-product-card-image">');
                         }
-                        $card.append(
+                        $link.append(
                             '<div class="waa-product-card-info">' +
                             '<div class="waa-product-card-title">' + product.title + '</div>' +
                             '<div class="waa-product-card-price">' + formatPrice(product.price) + '</div>' +
                             '</div>'
                         );
+                        $card.append($link);
+
+                        // Add to cart button
+                        if (product.stock_status === 'instock') {
+                            var $btn = $('<button class="waa-add-to-cart" data-product-id="' + product.id + '">' +
+                                waaConfig.i18n.addToCart + '</button>');
+                            $card.append($btn);
+                        } else {
+                            $card.append('<span class="waa-out-of-stock">' + waaConfig.i18n.outOfStock + '</span>');
+                        }
+
                         $cards.append($card);
                     });
                     $message.append($cards);
@@ -222,6 +236,50 @@
                 } else {
                     submitFeedback(messageId, rating, '', '', $feedback);
                 }
+            });
+
+            // Handle add to cart clicks
+            $messages.on('click', '.waa-add-to-cart', function(e) {
+                e.preventDefault();
+                var $btn = $(this);
+                var productId = $btn.data('product-id');
+
+                if ($btn.hasClass('adding') || $btn.hasClass('added')) {
+                    return;
+                }
+
+                $btn.addClass('adding').text(waaConfig.i18n.adding);
+
+                $.ajax({
+                    url: waaConfig.wcAjaxUrl.replace('%%endpoint%%', 'add_to_cart'),
+                    method: 'POST',
+                    data: {
+                        product_id: productId,
+                        quantity: 1
+                    },
+                    success: function(response) {
+                        if (response.error) {
+                            $btn.removeClass('adding').text(waaConfig.i18n.addToCart);
+                            alert(response.error);
+                        } else {
+                            $btn.removeClass('adding').addClass('added');
+                            $btn.html(waaConfig.i18n.added + ' <a href="' + waaConfig.cartUrl + '">' + waaConfig.i18n.viewCart + '</a>');
+
+                            // Update cart fragments if available
+                            if (response.fragments) {
+                                $.each(response.fragments, function(key, value) {
+                                    $(key).replaceWith(value);
+                                });
+                            }
+
+                            // Trigger WooCommerce added to cart event
+                            $(document.body).trigger('added_to_cart', [response.fragments, response.cart_hash, $btn]);
+                        }
+                    },
+                    error: function() {
+                        $btn.removeClass('adding').text(waaConfig.i18n.addToCart);
+                    }
+                });
             });
 
             function showFeedbackForm(messageId, $feedback) {

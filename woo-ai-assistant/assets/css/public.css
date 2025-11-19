@@ -336,17 +336,23 @@
 
 .waa-product-card {
     display: flex;
+    flex-direction: column;
     background: white;
     border: 1px solid var(--waa-border);
     border-radius: 6px;
     padding: 8px;
-    text-decoration: none;
-    color: var(--waa-text);
     transition: border-color 0.2s;
 }
 
 .waa-product-card:hover {
     border-color: var(--waa-primary);
+}
+
+.waa-product-card-link {
+    display: flex;
+    text-decoration: none;
+    color: var(--waa-text);
+    margin-bottom: 8px;
 }
 
 .waa-product-card-image {
@@ -370,6 +376,54 @@
 .waa-product-card-price {
     color: var(--waa-primary);
     font-weight: 600;
+}
+
+/* Add to Cart Button */
+.waa-add-to-cart {
+    width: 100%;
+    padding: 6px 12px;
+    background: var(--waa-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.waa-add-to-cart:hover {
+    background: var(--waa-primary-hover);
+}
+
+.waa-add-to-cart.adding {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.waa-add-to-cart.added {
+    background: #00a32a;
+    cursor: default;
+}
+
+.waa-add-to-cart.added:hover {
+    background: #00a32a;
+}
+
+.waa-add-to-cart a {
+    color: white;
+    text-decoration: underline;
+    margin-left: 4px;
+}
+
+.waa-out-of-stock {
+    display: block;
+    text-align: center;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--waa-text-secondary);
+    background: var(--waa-bg-secondary);
+    border-radius: 4px;
 }
 
 /* Feedback */
