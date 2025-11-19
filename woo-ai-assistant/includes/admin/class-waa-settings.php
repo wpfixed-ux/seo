@@ -149,6 +149,19 @@ class WAA_Settings {
                                 </td>
                             </tr>
                             <tr>
+                                <th><?php _e('Модель чата', 'woo-ai-assistant'); ?></th>
+                                <td>
+                                    <?php $chat_model = get_option('waa_chat_model', 'gpt-4o-mini'); ?>
+                                    <select name="waa_chat_model">
+                                        <option value="gpt-4o-mini" <?php selected($chat_model, 'gpt-4o-mini'); ?>>gpt-4o-mini (быстрая, дешевая)</option>
+                                        <option value="gpt-4o" <?php selected($chat_model, 'gpt-4o'); ?>>gpt-4o (умная, дорогая)</option>
+                                        <option value="gpt-4-turbo" <?php selected($chat_model, 'gpt-4-turbo'); ?>>gpt-4-turbo</option>
+                                        <option value="gpt-3.5-turbo" <?php selected($chat_model, 'gpt-3.5-turbo'); ?>>gpt-3.5-turbo (устаревшая)</option>
+                                    </select>
+                                    <p class="description"><?php _e('Модель для генерации ответов', 'woo-ai-assistant'); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
                                 <th><?php _e('Макс. токенов ответа', 'woo-ai-assistant'); ?></th>
                                 <td>
                                     <input type="number" name="waa_max_tokens"
