@@ -175,8 +175,15 @@
                 // Add product cards
                 if (products && products.length > 0) {
                     var $cards = $('<div class="waa-product-cards"></div>');
-                    products.slice(0, 3).forEach(function(product) {
+                    var initialCount = 3;
+
+                    products.forEach(function(product, index) {
                         var $card = $('<div class="waa-product-card"></div>');
+
+                        // Hide cards beyond initial count
+                        if (index >= initialCount) {
+                            $card.addClass('waa-hidden-card');
+                        }
 
                         // Product link with image and info
                         var $link = $('<a href="' + product.url + '" class="waa-product-card-link" target="_blank"></a>');
@@ -202,6 +209,15 @@
 
                         $cards.append($card);
                     });
+
+                    // Add "Show more" button if there are more products
+                    if (products.length > initialCount) {
+                        var moreCount = products.length - initialCount;
+                        var $showMore = $('<button class="waa-show-more-products">' +
+                            waaConfig.i18n.showMore + ' (' + moreCount + ')' + '</button>');
+                        $cards.append($showMore);
+                    }
+
                     $message.append($cards);
                 }
 
@@ -280,6 +296,16 @@
                         $btn.removeClass('adding').text(waaConfig.i18n.addToCart);
                     }
                 });
+            });
+
+            // Handle show more products clicks
+            $messages.on('click', '.waa-show-more-products', function() {
+                var $btn = $(this);
+                var $cards = $btn.closest('.waa-product-cards');
+
+                $cards.find('.waa-hidden-card').removeClass('waa-hidden-card');
+                $btn.remove();
+                scrollToBottom();
             });
 
             function showFeedbackForm(messageId, $feedback) {

@@ -426,6 +426,30 @@
     border-radius: 4px;
 }
 
+/* Hidden product cards */
+.waa-hidden-card {
+    display: none;
+}
+
+/* Show more button */
+.waa-show-more-products {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--waa-bg-secondary);
+    color: var(--waa-primary);
+    border: 1px dashed var(--waa-border);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.waa-show-more-products:hover {
+    background: var(--waa-bg);
+    border-color: var(--waa-primary);
+}
+
 /* Feedback */
 .waa-feedback {
     display: flex;

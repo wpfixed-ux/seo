@@ -110,6 +110,7 @@ class WAA_Core {
                 'added' => __('Добавлено!', 'woo-ai-assistant'),
                 'viewCart' => __('Смотреть корзину', 'woo-ai-assistant'),
                 'outOfStock' => __('Нет в наличии', 'woo-ai-assistant'),
+                'showMore' => __('Показать ещё', 'woo-ai-assistant'),
             )
         ));
     }
