@@ -20,6 +20,40 @@ class WAA_REST_API {
 
     private function __construct() {
         add_action('rest_api_init', array($this, 'register_routes'));
+        add_action('rest_api_init', array($this, 'add_cors_headers'));
+    }
+
+    /**
+     * Add CORS headers for REST API
+     */
+    public function add_cors_headers() {
+        // Remove default WordPress REST API CORS
+        remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
+
+        // Add custom CORS headers
+        add_filter('rest_pre_serve_request', function($value) {
+            $origin = get_http_origin();
+
+            // Allow same-origin requests
+            if ($origin) {
+                header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
+            } else {
+                header('Access-Control-Allow-Origin: ' . home_url());
+            }
+
+            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: X-WP-Nonce, Content-Type, Authorization');
+            header('Access-Control-Max-Age: 600');
+
+            // Handle preflight OPTIONS request
+            if ('OPTIONS' === $_SERVER['REQUEST_METHOD']) {
+                status_header(200);
+                exit();
+            }
+
+            return $value;
+        });
     }
 
     public function register_routes() {

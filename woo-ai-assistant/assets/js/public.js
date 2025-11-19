@@ -51,6 +51,9 @@
             url: waaConfig.restUrl + 'search',
             method: 'POST',
             contentType: 'application/json',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-WP-Nonce', waaConfig.nonce);
+            },
             data: JSON.stringify({
                 query: query,
                 language: language,
@@ -132,6 +135,9 @@
                     url: waaConfig.restUrl + 'chat',
                     method: 'POST',
                     contentType: 'application/json',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-WP-Nonce', waaConfig.nonce);
+                    },
                     data: JSON.stringify({
                         message: message,
                         session_id: sessionId,
@@ -357,6 +363,9 @@
                     url: waaConfig.restUrl + 'feedback',
                     method: 'POST',
                     contentType: 'application/json',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-WP-Nonce', waaConfig.nonce);
+                    },
                     data: JSON.stringify({
                         message_id: messageId,
                         rating: rating,
@@ -388,6 +397,9 @@
                     url: waaConfig.restUrl + 'track',
                     method: 'POST',
                     contentType: 'application/json',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-WP-Nonce', waaConfig.nonce);
+                    },
                     data: JSON.stringify({
                         session_id: sessionId,
                         product_id: productId,
