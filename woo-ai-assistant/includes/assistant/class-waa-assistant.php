@@ -27,68 +27,92 @@ class WAA_Assistant {
      * Process user query and generate response
      */
     public function query($user_message, $session_id = '', $language = 'ru') {
-        $ai_provider = WAA_Core::get_ai_provider();
+        try {
+            error_log('WAA Debug: Starting query processing');
 
-        // Get embedding for user query
-        $query_embedding = $ai_provider->get_embedding($user_message);
+            $ai_provider = WAA_Core::get_ai_provider();
 
-        if (!$query_embedding['success']) {
-            error_log('WAA Embedding Error: ' . $query_embedding['error']);
+            if (!$ai_provider) {
+                error_log('WAA Error: AI provider not initialized');
+                return array(
+                    'success' => false,
+                    'error' => 'AI provider not configured'
+                );
+            }
+
+            // Get embedding for user query
+            error_log('WAA Debug: Getting embedding');
+            $query_embedding = $ai_provider->get_embedding($user_message);
+
+            if (!$query_embedding['success']) {
+                error_log('WAA Embedding Error: ' . $query_embedding['error']);
+                return array(
+                    'success' => false,
+                    'error' => $query_embedding['error']
+                );
+            }
+
+            // Search for relevant context
+            $context_limit = get_option('waa_context_limit', 5);
+            error_log('WAA Debug: Searching vectors with limit ' . $context_limit);
+            $results = $this->vector_db->search(
+                $query_embedding['embedding'],
+                $context_limit,
+                $language
+            );
+
+            // Build context for AI
+            $context = $this->build_context($results, $language);
+
+            // Get conversation history
+            $history = $this->get_conversation_history($session_id);
+
+            // Build messages
+            $messages = $this->build_messages($user_message, $context, $history, $language);
+
+            // Generate response
+            error_log('WAA Debug: Calling chat API');
+            $response = $ai_provider->chat($messages);
+
+            if (!$response['success']) {
+                error_log('WAA Chat Completion Error: ' . $response['error']);
+                return array(
+                    'success' => false,
+                    'error' => $response['error']
+                );
+            }
+
+            error_log('WAA Debug: Parsing AI response');
+            // Parse JSON response to extract message and relevant products
+            $parsed = $this->parse_ai_response($response['message'], $results);
+            $final_message = $parsed['message'];
+            $relevant_indices = $parsed['relevant_products'];
+
+            // Get usage data
+            $usage = isset($response['usage']) ? $response['usage'] : null;
+
+            // Save to history and get message ID
+            error_log('WAA Debug: Saving to history');
+            $message_id = $this->save_to_history($session_id, $user_message, $final_message, $results, $language, $usage);
+
+            // Extract only relevant products
+            $products = $this->extract_products($results, $relevant_indices);
+
+            error_log('WAA Debug: Query completed successfully');
+            return array(
+                'success' => true,
+                'message' => $final_message,
+                'message_id' => $message_id,
+                'products' => $products,
+                'usage' => $usage
+            );
+        } catch (Exception $e) {
+            error_log('WAA Fatal Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             return array(
                 'success' => false,
-                'error' => $query_embedding['error']
+                'error' => 'Internal error: ' . $e->getMessage()
             );
         }
-
-        // Search for relevant context
-        $context_limit = get_option('waa_context_limit', 5);
-        $results = $this->vector_db->search(
-            $query_embedding['embedding'],
-            $context_limit,
-            $language
-        );
-
-        // Build context for AI
-        $context = $this->build_context($results, $language);
-
-        // Get conversation history
-        $history = $this->get_conversation_history($session_id);
-
-        // Build messages
-        $messages = $this->build_messages($user_message, $context, $history, $language);
-
-        // Generate response
-        $response = $ai_provider->chat($messages);
-
-        if (!$response['success']) {
-            error_log('WAA Chat Completion Error: ' . $response['error']);
-            return array(
-                'success' => false,
-                'error' => $response['error']
-            );
-        }
-
-        // Parse JSON response to extract message and relevant products
-        $parsed = $this->parse_ai_response($response['message'], $results);
-        $final_message = $parsed['message'];
-        $relevant_indices = $parsed['relevant_products'];
-
-        // Get usage data
-        $usage = isset($response['usage']) ? $response['usage'] : null;
-
-        // Save to history and get message ID
-        $message_id = $this->save_to_history($session_id, $user_message, $final_message, $results, $language, $usage);
-
-        // Extract only relevant products
-        $products = $this->extract_products($results, $relevant_indices);
-
-        return array(
-            'success' => true,
-            'message' => $final_message,
-            'message_id' => $message_id,
-            'products' => $products,
-            'usage' => $usage
-        );
     }
 
     /**
@@ -243,34 +267,59 @@ class WAA_Assistant {
             $context_ids[] = $result['object_type'] . ':' . $result['object_id'];
         }
 
-        // Calculate tokens and cost
-        $tokens_input = 0;
-        $tokens_output = 0;
-        $cost = 0;
+        // Check if new columns exist
+        $has_token_columns = $this->check_token_columns_exist();
 
-        if ($usage) {
+        // Basic data for insert
+        $data = array(
+            'session_id' => $session_id,
+            'user_message' => $user_message,
+            'assistant_message' => $assistant_message,
+            'context_ids' => json_encode($context_ids),
+            'language' => $language,
+            'created_at' => current_time('mysql')
+        );
+        $formats = array('%s', '%s', '%s', '%s', '%s', '%s');
+
+        // Add token columns if they exist
+        if ($has_token_columns && $usage) {
             $tokens_input = isset($usage['prompt_tokens']) ? $usage['prompt_tokens'] : 0;
             $tokens_output = isset($usage['completion_tokens']) ? $usage['completion_tokens'] : 0;
             $cost = $this->calculate_cost($tokens_input, $tokens_output);
+
+            $data['tokens_input'] = $tokens_input;
+            $data['tokens_output'] = $tokens_output;
+            $data['cost'] = $cost;
+            $formats[] = '%d';
+            $formats[] = '%d';
+            $formats[] = '%f';
         }
 
-        $wpdb->insert(
-            $table,
-            array(
-                'session_id' => $session_id,
-                'user_message' => $user_message,
-                'assistant_message' => $assistant_message,
-                'context_ids' => json_encode($context_ids),
-                'language' => $language,
-                'tokens_input' => $tokens_input,
-                'tokens_output' => $tokens_output,
-                'cost' => $cost,
-                'created_at' => current_time('mysql')
-            ),
-            array('%s', '%s', '%s', '%s', '%s', '%d', '%d', '%f', '%s')
-        );
+        $result = $wpdb->insert($table, $data, $formats);
+
+        if ($result === false) {
+            error_log('WAA DB Insert Error: ' . $wpdb->last_error);
+            error_log('WAA DB Query: ' . $wpdb->last_query);
+            return null;
+        }
 
         return $wpdb->insert_id;
+    }
+
+    /**
+     * Check if token columns exist in chat history table
+     */
+    private function check_token_columns_exist() {
+        global $wpdb;
+        static $exists = null;
+
+        if ($exists === null) {
+            $table = $wpdb->prefix . 'waa_chat_history';
+            $column = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'tokens_input'");
+            $exists = !empty($column);
+        }
+
+        return $exists;
     }
 
     /**
