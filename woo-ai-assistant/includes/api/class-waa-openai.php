@@ -67,8 +67,19 @@ class WAA_OpenAI extends WAA_API_Base {
         }
 
         $model = isset($options['model']) ? $options['model'] : get_option('waa_chat_model', 'gpt-4o-mini');
+        if (empty($model)) {
+            $model = 'gpt-4o-mini';
+        }
+
         $max_tokens = isset($options['max_tokens']) ? $options['max_tokens'] : get_option('waa_max_tokens', 1000);
+        if (empty($max_tokens)) {
+            $max_tokens = 1000;
+        }
+
         $temperature = isset($options['temperature']) ? $options['temperature'] : get_option('waa_temperature', 0.7);
+        if ($temperature === '' || $temperature === false) {
+            $temperature = 0.7;
+        }
 
         $response = $this->request(
             $this->base_url . '/chat/completions',
