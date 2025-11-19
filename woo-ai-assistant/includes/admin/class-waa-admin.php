@@ -465,31 +465,116 @@ class WAA_Admin {
         global $wpdb;
 
         $stats_table = $wpdb->prefix . 'waa_click_stats';
+        $chat_table = $wpdb->prefix . 'waa_chat_history';
 
-        // Date filter
-        $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : date('Y-m-d', strtotime('-30 days'));
-        $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : date('Y-m-d');
+        // Current month dates
+        $current_month_start = date('Y-m-01');
+        $current_month_end = date('Y-m-t');
 
-        // Total statistics
-        $total_clicks = $wpdb->get_var($wpdb->prepare(
+        // Total statistics (all time)
+        $total_tokens = $wpdb->get_var("SELECT SUM(tokens_input + tokens_output) FROM $chat_table");
+        $total_cost = $wpdb->get_var("SELECT SUM(cost) FROM $chat_table");
+        $total_dialogs = $wpdb->get_var("SELECT COUNT(*) FROM $chat_table");
+        $total_clicks = $wpdb->get_var("SELECT COUNT(*) FROM $stats_table WHERE event_type = 'click'");
+        $total_cart = $wpdb->get_var("SELECT COUNT(*) FROM $stats_table WHERE event_type = 'add_to_cart'");
+
+        // Current month totals
+        $month_tokens = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(tokens_input + tokens_output) FROM $chat_table WHERE created_at BETWEEN %s AND %s",
+            $current_month_start . ' 00:00:00',
+            $current_month_end . ' 23:59:59'
+        ));
+        $month_cost = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(cost) FROM $chat_table WHERE created_at BETWEEN %s AND %s",
+            $current_month_start . ' 00:00:00',
+            $current_month_end . ' 23:59:59'
+        ));
+        $month_dialogs = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $chat_table WHERE created_at BETWEEN %s AND %s",
+            $current_month_start . ' 00:00:00',
+            $current_month_end . ' 23:59:59'
+        ));
+        $month_clicks = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM $stats_table WHERE event_type = 'click' AND created_at BETWEEN %s AND %s",
-            $date_from . ' 00:00:00',
-            $date_to . ' 23:59:59'
+            $current_month_start . ' 00:00:00',
+            $current_month_end . ' 23:59:59'
         ));
-
-        $total_add_to_cart = $wpdb->get_var($wpdb->prepare(
+        $month_cart = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM $stats_table WHERE event_type = 'add_to_cart' AND created_at BETWEEN %s AND %s",
-            $date_from . ' 00:00:00',
-            $date_to . ' 23:59:59'
+            $current_month_start . ' 00:00:00',
+            $current_month_end . ' 23:59:59'
         ));
 
-        $unique_sessions = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(DISTINCT session_id) FROM $stats_table WHERE created_at BETWEEN %s AND %s",
-            $date_from . ' 00:00:00',
-            $date_to . ' 23:59:59'
+        // Daily stats for current month
+        $daily_stats = $wpdb->get_results($wpdb->prepare(
+            "SELECT
+                DATE(c.date) as date,
+                COALESCE(ch.dialogs, 0) as dialogs,
+                COALESCE(ch.tokens, 0) as tokens,
+                COALESCE(ch.cost, 0) as cost,
+                COALESCE(cs.clicks, 0) as clicks,
+                COALESCE(cs.cart, 0) as cart
+             FROM (
+                SELECT DATE(created_at) as date FROM $chat_table WHERE created_at BETWEEN %s AND %s
+                UNION
+                SELECT DATE(created_at) as date FROM $stats_table WHERE created_at BETWEEN %s AND %s
+             ) c
+             LEFT JOIN (
+                SELECT DATE(created_at) as date, COUNT(*) as dialogs, SUM(tokens_input + tokens_output) as tokens, SUM(cost) as cost
+                FROM $chat_table
+                WHERE created_at BETWEEN %s AND %s
+                GROUP BY DATE(created_at)
+             ) ch ON c.date = ch.date
+             LEFT JOIN (
+                SELECT DATE(created_at) as date,
+                       SUM(CASE WHEN event_type = 'click' THEN 1 ELSE 0 END) as clicks,
+                       SUM(CASE WHEN event_type = 'add_to_cart' THEN 1 ELSE 0 END) as cart
+                FROM $stats_table
+                WHERE created_at BETWEEN %s AND %s
+                GROUP BY DATE(created_at)
+             ) cs ON c.date = cs.date
+             GROUP BY c.date
+             ORDER BY c.date DESC",
+            $current_month_start . ' 00:00:00', $current_month_end . ' 23:59:59',
+            $current_month_start . ' 00:00:00', $current_month_end . ' 23:59:59',
+            $current_month_start . ' 00:00:00', $current_month_end . ' 23:59:59',
+            $current_month_start . ' 00:00:00', $current_month_end . ' 23:59:59'
         ));
 
-        // Top products by clicks
+        // Monthly summary for previous months
+        $monthly_stats = $wpdb->get_results(
+            "SELECT
+                DATE_FORMAT(c.month, '%Y-%m') as month,
+                COALESCE(ch.dialogs, 0) as dialogs,
+                COALESCE(ch.tokens, 0) as tokens,
+                COALESCE(ch.cost, 0) as cost,
+                COALESCE(cs.clicks, 0) as clicks,
+                COALESCE(cs.cart, 0) as cart
+             FROM (
+                SELECT DATE_FORMAT(created_at, '%Y-%m-01') as month FROM $chat_table WHERE created_at < '$current_month_start'
+                UNION
+                SELECT DATE_FORMAT(created_at, '%Y-%m-01') as month FROM $stats_table WHERE created_at < '$current_month_start'
+             ) c
+             LEFT JOIN (
+                SELECT DATE_FORMAT(created_at, '%Y-%m-01') as month, COUNT(*) as dialogs, SUM(tokens_input + tokens_output) as tokens, SUM(cost) as cost
+                FROM $chat_table
+                WHERE created_at < '$current_month_start'
+                GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+             ) ch ON c.month = ch.month
+             LEFT JOIN (
+                SELECT DATE_FORMAT(created_at, '%Y-%m-01') as month,
+                       SUM(CASE WHEN event_type = 'click' THEN 1 ELSE 0 END) as clicks,
+                       SUM(CASE WHEN event_type = 'add_to_cart' THEN 1 ELSE 0 END) as cart
+                FROM $stats_table
+                WHERE created_at < '$current_month_start'
+                GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+             ) cs ON c.month = cs.month
+             GROUP BY c.month
+             ORDER BY c.month DESC
+             LIMIT 12"
+        );
+
+        // Top products by clicks (current month)
         $top_clicks = $wpdb->get_results($wpdb->prepare(
             "SELECT product_id, COUNT(*) as click_count
              FROM $stats_table
@@ -497,11 +582,11 @@ class WAA_Admin {
              GROUP BY product_id
              ORDER BY click_count DESC
              LIMIT 10",
-            $date_from . ' 00:00:00',
-            $date_to . ' 23:59:59'
+            $current_month_start . ' 00:00:00',
+            $current_month_end . ' 23:59:59'
         ));
 
-        // Top products by add to cart
+        // Top products by add to cart (current month)
         $top_cart = $wpdb->get_results($wpdb->prepare(
             "SELECT product_id, COUNT(*) as cart_count
              FROM $stats_table
@@ -509,63 +594,131 @@ class WAA_Admin {
              GROUP BY product_id
              ORDER BY cart_count DESC
              LIMIT 10",
-            $date_from . ' 00:00:00',
-            $date_to . ' 23:59:59'
-        ));
-
-        // Daily stats for chart
-        $daily_stats = $wpdb->get_results($wpdb->prepare(
-            "SELECT DATE(created_at) as date,
-                    SUM(CASE WHEN event_type = 'click' THEN 1 ELSE 0 END) as clicks,
-                    SUM(CASE WHEN event_type = 'add_to_cart' THEN 1 ELSE 0 END) as add_to_cart
-             FROM $stats_table
-             WHERE created_at BETWEEN %s AND %s
-             GROUP BY DATE(created_at)
-             ORDER BY date ASC",
-            $date_from . ' 00:00:00',
-            $date_to . ' 23:59:59'
+            $current_month_start . ' 00:00:00',
+            $current_month_end . ' 23:59:59'
         ));
 
         ?>
         <div class="wrap waa-admin-wrap">
-            <h1><?php _e('Статистика чата', 'woo-ai-assistant'); ?></h1>
+            <h1><?php _e('Аналитика чата', 'woo-ai-assistant'); ?></h1>
 
-            <!-- Date Filter -->
-            <div class="waa-stats-filter">
-                <form method="get">
-                    <input type="hidden" name="page" value="waa-statistics">
-                    <label><?php _e('С:', 'woo-ai-assistant'); ?></label>
-                    <input type="date" name="date_from" value="<?php echo esc_attr($date_from); ?>">
-                    <label><?php _e('По:', 'woo-ai-assistant'); ?></label>
-                    <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>">
-                    <button type="submit" class="button"><?php _e('Применить', 'woo-ai-assistant'); ?></button>
-                </form>
-            </div>
-
-            <!-- Summary Cards -->
+            <!-- All time Summary Cards -->
+            <h2><?php _e('Общая статистика (все время)', 'woo-ai-assistant'); ?></h2>
             <div class="waa-stats-summary">
                 <div class="waa-stat-card">
-                    <div class="waa-stat-number"><?php echo esc_html($total_clicks); ?></div>
-                    <div class="waa-stat-label"><?php _e('Переходов на товары', 'woo-ai-assistant'); ?></div>
+                    <div class="waa-stat-number"><?php echo number_format($total_tokens ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('Токенов использовано', 'woo-ai-assistant'); ?></div>
                 </div>
                 <div class="waa-stat-card">
-                    <div class="waa-stat-number"><?php echo esc_html($total_add_to_cart); ?></div>
-                    <div class="waa-stat-label"><?php _e('Добавлений в корзину', 'woo-ai-assistant'); ?></div>
+                    <div class="waa-stat-number">$<?php echo number_format($total_cost ?: 0, 4); ?></div>
+                    <div class="waa-stat-label"><?php _e('Расходы', 'woo-ai-assistant'); ?></div>
                 </div>
                 <div class="waa-stat-card">
-                    <div class="waa-stat-number"><?php echo esc_html($unique_sessions); ?></div>
-                    <div class="waa-stat-label"><?php _e('Уникальных сессий', 'woo-ai-assistant'); ?></div>
+                    <div class="waa-stat-number"><?php echo number_format($total_dialogs ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('Диалогов', 'woo-ai-assistant'); ?></div>
                 </div>
                 <div class="waa-stat-card">
-                    <div class="waa-stat-number"><?php echo $total_clicks > 0 ? round(($total_add_to_cart / $total_clicks) * 100, 1) : 0; ?>%</div>
-                    <div class="waa-stat-label"><?php _e('Конверсия в корзину', 'woo-ai-assistant'); ?></div>
+                    <div class="waa-stat-number"><?php echo number_format($total_clicks ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('Переходов', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo number_format($total_cart ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('В корзину', 'woo-ai-assistant'); ?></div>
                 </div>
             </div>
 
+            <!-- Current Month Summary -->
+            <h2><?php echo sprintf(__('Текущий месяц (%s)', 'woo-ai-assistant'), date_i18n('F Y')); ?></h2>
+            <div class="waa-stats-summary">
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo number_format($month_tokens ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('Токенов', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number">$<?php echo number_format($month_cost ?: 0, 4); ?></div>
+                    <div class="waa-stat-label"><?php _e('Расходы', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo number_format($month_dialogs ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('Диалогов', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo number_format($month_clicks ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('Переходов', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo number_format($month_cart ?: 0); ?></div>
+                    <div class="waa-stat-label"><?php _e('В корзину', 'woo-ai-assistant'); ?></div>
+                </div>
+            </div>
+
+            <!-- Daily Stats for Current Month -->
+            <?php if (!empty($daily_stats)): ?>
+            <div class="waa-card" style="margin-bottom: 20px;">
+                <h3><?php _e('Детализация по дням (текущий месяц)', 'woo-ai-assistant'); ?></h3>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Дата', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Диалоги', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Токены', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Расходы', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Переходы', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('В корзину', 'woo-ai-assistant'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($daily_stats as $day): ?>
+                        <tr>
+                            <td><?php echo esc_html(date_i18n('d.m.Y', strtotime($day->date))); ?></td>
+                            <td><?php echo number_format($day->dialogs); ?></td>
+                            <td><?php echo number_format($day->tokens); ?></td>
+                            <td>$<?php echo number_format($day->cost, 4); ?></td>
+                            <td><?php echo number_format($day->clicks); ?></td>
+                            <td><?php echo number_format($day->cart); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
+            <!-- Monthly Summary for Previous Months -->
+            <?php if (!empty($monthly_stats)): ?>
+            <div class="waa-card" style="margin-bottom: 20px;">
+                <h3><?php _e('Статистика по месяцам', 'woo-ai-assistant'); ?></h3>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Месяц', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Диалоги', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Токены', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Расходы', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Переходы', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('В корзину', 'woo-ai-assistant'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($monthly_stats as $month): ?>
+                        <tr>
+                            <td><?php echo esc_html(date_i18n('F Y', strtotime($month->month . '-01'))); ?></td>
+                            <td><?php echo number_format($month->dialogs); ?></td>
+                            <td><?php echo number_format($month->tokens); ?></td>
+                            <td>$<?php echo number_format($month->cost, 4); ?></td>
+                            <td><?php echo number_format($month->clicks); ?></td>
+                            <td><?php echo number_format($month->cart); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
+            <!-- Top Products -->
             <div class="waa-stats-grid">
                 <!-- Top Products by Clicks -->
                 <div class="waa-card">
-                    <h3><?php _e('Топ товаров по переходам', 'woo-ai-assistant'); ?></h3>
+                    <h3><?php _e('Топ товаров по переходам (этот месяц)', 'woo-ai-assistant'); ?></h3>
                     <?php if (empty($top_clicks)): ?>
                         <p><?php _e('Нет данных', 'woo-ai-assistant'); ?></p>
                     <?php else: ?>
@@ -599,7 +752,7 @@ class WAA_Admin {
 
                 <!-- Top Products by Add to Cart -->
                 <div class="waa-card">
-                    <h3><?php _e('Топ товаров по добавлению в корзину', 'woo-ai-assistant'); ?></h3>
+                    <h3><?php _e('Топ товаров по добавлению в корзину (этот месяц)', 'woo-ai-assistant'); ?></h3>
                     <?php if (empty($top_cart)): ?>
                         <p><?php _e('Нет данных', 'woo-ai-assistant'); ?></p>
                     <?php else: ?>
@@ -631,44 +784,19 @@ class WAA_Admin {
                     <?php endif; ?>
                 </div>
             </div>
-
-            <!-- Daily Chart Data (for future chart implementation) -->
-            <?php if (!empty($daily_stats)): ?>
-            <div class="waa-card">
-                <h3><?php _e('Статистика по дням', 'woo-ai-assistant'); ?></h3>
-                <table class="widefat">
-                    <thead>
-                        <tr>
-                            <th><?php _e('Дата', 'woo-ai-assistant'); ?></th>
-                            <th><?php _e('Переходы', 'woo-ai-assistant'); ?></th>
-                            <th><?php _e('В корзину', 'woo-ai-assistant'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($daily_stats as $day): ?>
-                        <tr>
-                            <td><?php echo esc_html(date_i18n('d.m.Y', strtotime($day->date))); ?></td>
-                            <td><?php echo esc_html($day->clicks); ?></td>
-                            <td><?php echo esc_html($day->add_to_cart); ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php endif; ?>
         </div>
 
         <style>
-            .waa-stats-filter { margin: 15px 0; }
-            .waa-stats-filter label { margin: 0 5px; }
-            .waa-stats-filter input[type="date"] { margin-right: 10px; }
-            .waa-stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+            .waa-stats-summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin: 20px 0; }
             .waa-stat-card { background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px; text-align: center; }
-            .waa-stat-number { font-size: 32px; font-weight: bold; color: #2271b1; }
-            .waa-stat-label { color: #50575e; margin-top: 5px; }
+            .waa-stat-number { font-size: 24px; font-weight: bold; color: #2271b1; }
+            .waa-stat-label { color: #50575e; margin-top: 5px; font-size: 12px; }
             .waa-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
             .waa-card { background: #fff; padding: 15px; border: 1px solid #c3c4c7; border-radius: 4px; }
             .waa-card h3 { margin-top: 0; }
+            @media (max-width: 1200px) {
+                .waa-stats-summary { grid-template-columns: repeat(3, 1fr); }
+            }
             @media (max-width: 782px) {
                 .waa-stats-summary { grid-template-columns: repeat(2, 1fr); }
                 .waa-stats-grid { grid-template-columns: 1fr; }

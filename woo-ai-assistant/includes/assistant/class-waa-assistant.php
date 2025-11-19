@@ -73,8 +73,11 @@ class WAA_Assistant {
         $final_message = $parsed['message'];
         $relevant_indices = $parsed['relevant_products'];
 
+        // Get usage data
+        $usage = isset($response['usage']) ? $response['usage'] : null;
+
         // Save to history and get message ID
-        $message_id = $this->save_to_history($session_id, $user_message, $final_message, $results, $language);
+        $message_id = $this->save_to_history($session_id, $user_message, $final_message, $results, $language, $usage);
 
         // Extract only relevant products
         $products = $this->extract_products($results, $relevant_indices);
@@ -84,7 +87,7 @@ class WAA_Assistant {
             'message' => $final_message,
             'message_id' => $message_id,
             'products' => $products,
-            'usage' => isset($response['usage']) ? $response['usage'] : null
+            'usage' => $usage
         );
     }
 
@@ -227,7 +230,7 @@ class WAA_Assistant {
      * Save conversation to history
      * @return int|null Message ID
      */
-    private function save_to_history($session_id, $user_message, $assistant_message, $results, $language) {
+    private function save_to_history($session_id, $user_message, $assistant_message, $results, $language, $usage = null) {
         if (empty($session_id)) {
             return null;
         }
@@ -240,6 +243,17 @@ class WAA_Assistant {
             $context_ids[] = $result['object_type'] . ':' . $result['object_id'];
         }
 
+        // Calculate tokens and cost
+        $tokens_input = 0;
+        $tokens_output = 0;
+        $cost = 0;
+
+        if ($usage) {
+            $tokens_input = isset($usage['prompt_tokens']) ? $usage['prompt_tokens'] : 0;
+            $tokens_output = isset($usage['completion_tokens']) ? $usage['completion_tokens'] : 0;
+            $cost = $this->calculate_cost($tokens_input, $tokens_output);
+        }
+
         $wpdb->insert(
             $table,
             array(
@@ -248,12 +262,37 @@ class WAA_Assistant {
                 'assistant_message' => $assistant_message,
                 'context_ids' => json_encode($context_ids),
                 'language' => $language,
+                'tokens_input' => $tokens_input,
+                'tokens_output' => $tokens_output,
+                'cost' => $cost,
                 'created_at' => current_time('mysql')
             ),
-            array('%s', '%s', '%s', '%s', '%s', '%s')
+            array('%s', '%s', '%s', '%s', '%s', '%d', '%d', '%f', '%s')
         );
 
         return $wpdb->insert_id;
+    }
+
+    /**
+     * Calculate cost based on token usage
+     */
+    private function calculate_cost($input_tokens, $output_tokens) {
+        $model = get_option('waa_chat_model', 'gpt-4o-mini');
+
+        // Prices per 1M tokens (as of 2024)
+        $prices = array(
+            'gpt-4o-mini' => array('input' => 0.15, 'output' => 0.60),
+            'gpt-4o' => array('input' => 2.50, 'output' => 10.00),
+            'gpt-4-turbo' => array('input' => 10.00, 'output' => 30.00),
+            'gpt-3.5-turbo' => array('input' => 0.50, 'output' => 1.50),
+        );
+
+        $price = isset($prices[$model]) ? $prices[$model] : $prices['gpt-4o-mini'];
+
+        $input_cost = ($input_tokens / 1000000) * $price['input'];
+        $output_cost = ($output_tokens / 1000000) * $price['output'];
+
+        return $input_cost + $output_cost;
     }
 
     /**
