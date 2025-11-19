@@ -68,15 +68,20 @@ class WAA_Assistant {
             );
         }
 
-        // Save to history and get message ID
-        $message_id = $this->save_to_history($session_id, $user_message, $response['message'], $results, $language);
+        // Parse JSON response to extract message and relevant products
+        $parsed = $this->parse_ai_response($response['message'], $results);
+        $final_message = $parsed['message'];
+        $relevant_indices = $parsed['relevant_products'];
 
-        // Extract product links from context
-        $products = $this->extract_products($results);
+        // Save to history and get message ID
+        $message_id = $this->save_to_history($session_id, $user_message, $final_message, $results, $language);
+
+        // Extract only relevant products
+        $products = $this->extract_products($results, $relevant_indices);
 
         return array(
             'success' => true,
-            'message' => $response['message'],
+            'message' => $final_message,
             'message_id' => $message_id,
             'products' => $products,
             'usage' => isset($response['usage']) ? $response['usage'] : null
@@ -157,6 +162,19 @@ class WAA_Assistant {
               "Рекомендуй ТОЛЬКО те товары, которые логически отвечают на вопрос покупателя.";
 
         $system_prompt .= "\n\n" . $relevance_instruction;
+
+        // Add JSON format instruction for filtering
+        $json_instruction = $language === 'uk'
+            ? "\n\nФОРМАТ ВІДПОВІДІ: Відповідай у форматі JSON:\n" .
+              "{\"message\": \"твоя відповідь покупцю\", \"relevant_products\": [1, 2, 3]}\n" .
+              "де relevant_products - масив номерів товарів (в квадратних дужках біля товарів), які ДІЙСНО підходять до запиту.\n" .
+              "Якщо жоден товар не підходить - поверни порожній масив []."
+            : "\n\nФОРМАТ ОТВЕТА: Отвечай в формате JSON:\n" .
+              "{\"message\": \"твой ответ покупателю\", \"relevant_products\": [1, 2, 3]}\n" .
+              "где relevant_products - массив номеров товаров (в квадратных скобках у товаров), которые ДЕЙСТВИТЕЛЬНО подходят к запросу.\n" .
+              "Если ни один товар не подходит - верни пустой массив [].";
+
+        $system_prompt .= $json_instruction;
         $system_prompt .= "\n\nИспользуй следующую информацию о товарах для ответа на вопросы покупателя. Всегда указывай ссылки на товары. Если среди найденных товаров нет подходящих - честно скажи об этом.\n\nДоступные товары и информация:\n" . $context;
 
         $messages = array(
@@ -239,13 +257,66 @@ class WAA_Assistant {
     }
 
     /**
+     * Parse AI response to extract message and relevant products
+     */
+    private function parse_ai_response($response, $results) {
+        // Try to parse JSON from response
+        $json_data = null;
+
+        // Try direct JSON parse
+        $decoded = json_decode($response, true);
+        if ($decoded && isset($decoded['message'])) {
+            $json_data = $decoded;
+        }
+
+        // Try to extract JSON from markdown code block
+        if (!$json_data && preg_match('/```(?:json)?\s*(\{[\s\S]*?\})\s*```/', $response, $matches)) {
+            $decoded = json_decode($matches[1], true);
+            if ($decoded && isset($decoded['message'])) {
+                $json_data = $decoded;
+            }
+        }
+
+        // Try to find JSON object in response
+        if (!$json_data && preg_match('/\{[^{}]*"message"[^{}]*\}/', $response, $matches)) {
+            $decoded = json_decode($matches[0], true);
+            if ($decoded && isset($decoded['message'])) {
+                $json_data = $decoded;
+            }
+        }
+
+        // Return parsed data or fallback
+        if ($json_data) {
+            $relevant = isset($json_data['relevant_products']) ? $json_data['relevant_products'] : array();
+            // Convert to 0-based indices (AI returns 1-based)
+            $relevant_indices = array_map(function($n) { return $n - 1; }, $relevant);
+
+            return array(
+                'message' => $json_data['message'],
+                'relevant_products' => $relevant_indices
+            );
+        }
+
+        // Fallback: return original response and all products
+        return array(
+            'message' => $response,
+            'relevant_products' => array_keys($results)
+        );
+    }
+
+    /**
      * Extract product information from results
      */
-    private function extract_products($results) {
+    private function extract_products($results, $relevant_indices = null) {
         $products = array();
 
-        foreach ($results as $result) {
+        foreach ($results as $index => $result) {
             if ($result['object_type'] !== 'product') {
+                continue;
+            }
+
+            // Skip if not in relevant indices (when filtering is enabled)
+            if ($relevant_indices !== null && !in_array($index, $relevant_indices)) {
                 continue;
             }
 
