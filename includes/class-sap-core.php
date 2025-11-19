@@ -148,6 +148,11 @@ class SAP_Core {
         // Metabox AJAX handlers
         $this->loader->add_action('wp_ajax_sap_generate_metabox_content', $plugin_admin, 'ajax_generate_metabox_content');
         $this->loader->add_action('wp_ajax_sap_generate_term_content', $plugin_admin, 'ajax_generate_term_content');
+
+        // API test and logs handlers
+        $this->loader->add_action('wp_ajax_sap_test_api_connection', $plugin_admin, 'ajax_test_api_connection');
+        $this->loader->add_action('wp_ajax_sap_get_api_logs', $plugin_admin, 'ajax_get_api_logs');
+        $this->loader->add_action('wp_ajax_sap_clear_api_logs', $plugin_admin, 'ajax_clear_api_logs');
     }
 
     /**

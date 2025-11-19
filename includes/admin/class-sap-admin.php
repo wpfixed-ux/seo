@@ -105,6 +105,15 @@ class SAP_Admin {
             'seo-analytics-pro-settings',
             array($this, 'display_settings_page')
         );
+
+        add_submenu_page(
+            'seo-analytics-pro',
+            __('API Logs', 'seo-analytics-pro'),
+            __('API Logs', 'seo-analytics-pro'),
+            'manage_options',
+            'seo-analytics-pro-logs',
+            array($this, 'display_logs_page')
+        );
     }
 
     public function register_settings() {
@@ -1582,5 +1591,372 @@ keyword 3"></textarea>
             'content' => $result['content'] ?? '',
             'term_id' => $term_id
         ));
+    }
+
+    /**
+     * AJAX handler for testing API connections
+     */
+    public function ajax_test_api_connection() {
+        check_ajax_referer('sap_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'seo-analytics-pro')));
+        }
+
+        $settings = get_option('sap_settings', array());
+        $results = array(
+            'claude' => array('status' => 'error', 'message' => __('Not configured', 'seo-analytics-pro')),
+            'serp' => array('status' => 'error', 'message' => __('Not configured', 'seo-analytics-pro'))
+        );
+
+        // Test Claude AI API
+        if (!empty($settings['claude_ai_api_key'])) {
+            $claude_result = $this->test_claude_api($settings['claude_ai_api_key']);
+            $results['claude'] = $claude_result;
+        }
+
+        // Test SERP API
+        if (!empty($settings['serp_api_key'])) {
+            $provider = $settings['serp_api_provider'] ?? 'serpapi';
+            $serp_result = $this->test_serp_api($settings['serp_api_key'], $provider);
+            $results['serp'] = $serp_result;
+        }
+
+        wp_send_json_success($results);
+    }
+
+    /**
+     * Test Claude AI API connection
+     */
+    private function test_claude_api($api_key) {
+        $start_time = microtime(true);
+
+        $response = wp_remote_post('https://api.anthropic.com/v1/messages', array(
+            'timeout' => 30,
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'x-api-key' => $api_key,
+                'anthropic-version' => '2023-06-01'
+            ),
+            'body' => json_encode(array(
+                'model' => 'claude-sonnet-4-5-20250929',
+                'max_tokens' => 10,
+                'messages' => array(
+                    array('role' => 'user', 'content' => 'Say "OK" if you receive this.')
+                )
+            ))
+        ));
+
+        $execution_time = microtime(true) - $start_time;
+
+        // Log the test
+        $this->log_api_test('Claude AI', 'test_connection', $response, $execution_time);
+
+        if (is_wp_error($response)) {
+            return array(
+                'status' => 'error',
+                'message' => $response->get_error_message(),
+                'time' => round($execution_time, 2)
+            );
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code === 200) {
+            return array(
+                'status' => 'success',
+                'message' => __('Connection successful', 'seo-analytics-pro'),
+                'time' => round($execution_time, 2),
+                'model' => $body['model'] ?? 'unknown'
+            );
+        } else {
+            $error_msg = $body['error']['message'] ?? __('Unknown error', 'seo-analytics-pro');
+            return array(
+                'status' => 'error',
+                'message' => $error_msg,
+                'code' => $code,
+                'time' => round($execution_time, 2)
+            );
+        }
+    }
+
+    /**
+     * Test SERP API connection
+     */
+    private function test_serp_api($api_key, $provider = 'serpapi') {
+        $start_time = microtime(true);
+
+        if ($provider === 'dataforseo') {
+            $response = wp_remote_get('https://api.dataforseo.com/v3/serp/google/organic/live/advanced', array(
+                'timeout' => 30,
+                'headers' => array(
+                    'Authorization' => 'Basic ' . base64_encode($api_key),
+                    'Content-Type' => 'application/json'
+                )
+            ));
+        } else {
+            // SerpAPI
+            $response = wp_remote_get('https://serpapi.com/account.json?api_key=' . $api_key, array(
+                'timeout' => 30
+            ));
+        }
+
+        $execution_time = microtime(true) - $start_time;
+
+        // Log the test
+        $this->log_api_test('SERP API (' . $provider . ')', 'test_connection', $response, $execution_time);
+
+        if (is_wp_error($response)) {
+            return array(
+                'status' => 'error',
+                'message' => $response->get_error_message(),
+                'time' => round($execution_time, 2)
+            );
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code === 200) {
+            $info = '';
+            if ($provider === 'serpapi' && isset($body['plan_name'])) {
+                $info = sprintf(__('Plan: %s, Searches: %d/%d', 'seo-analytics-pro'),
+                    $body['plan_name'],
+                    $body['this_month_usage'] ?? 0,
+                    $body['plan_searches_left'] ?? 0
+                );
+            }
+            return array(
+                'status' => 'success',
+                'message' => __('Connection successful', 'seo-analytics-pro'),
+                'info' => $info,
+                'time' => round($execution_time, 2)
+            );
+        } else {
+            $error_msg = $body['error'] ?? __('Authentication failed', 'seo-analytics-pro');
+            return array(
+                'status' => 'error',
+                'message' => $error_msg,
+                'code' => $code,
+                'time' => round($execution_time, 2)
+            );
+        }
+    }
+
+    /**
+     * Log API test to database
+     */
+    private function log_api_test($service_name, $endpoint, $response, $execution_time) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sap_api_logs';
+
+        $status_code = is_wp_error($response) ? 0 : wp_remote_retrieve_response_code($response);
+        $response_data = is_wp_error($response)
+            ? array('error' => $response->get_error_message())
+            : json_decode(wp_remote_retrieve_body($response), true);
+
+        $wpdb->insert(
+            $table_name,
+            array(
+                'service_name' => $service_name,
+                'endpoint' => $endpoint,
+                'request_data' => json_encode(array('type' => 'connection_test')),
+                'response_data' => json_encode($response_data),
+                'status_code' => $status_code,
+                'execution_time' => $execution_time,
+                'tokens_used' => 0,
+                'cost' => 0,
+                'created_at' => current_time('mysql')
+            ),
+            array('%s', '%s', '%s', '%s', '%d', '%f', '%d', '%f', '%s')
+        );
+    }
+
+    /**
+     * AJAX handler for getting API logs
+     */
+    public function ajax_get_api_logs() {
+        check_ajax_referer('sap_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'seo-analytics-pro')));
+        }
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sap_api_logs';
+
+        $page = isset($_POST['page']) ? absint($_POST['page']) : 1;
+        $per_page = 20;
+        $offset = ($page - 1) * $per_page;
+
+        $service_filter = isset($_POST['service']) ? sanitize_text_field($_POST['service']) : '';
+        $status_filter = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
+
+        $where = array('1=1');
+        $where_values = array();
+
+        if ($service_filter) {
+            $where[] = 'service_name LIKE %s';
+            $where_values[] = '%' . $wpdb->esc_like($service_filter) . '%';
+        }
+
+        if ($status_filter === 'success') {
+            $where[] = 'status_code = 200';
+        } elseif ($status_filter === 'error') {
+            $where[] = 'status_code != 200';
+        }
+
+        $where_clause = implode(' AND ', $where);
+
+        // Get total count
+        $total_query = "SELECT COUNT(*) FROM {$table_name} WHERE {$where_clause}";
+        if (!empty($where_values)) {
+            $total_query = $wpdb->prepare($total_query, $where_values);
+        }
+        $total = $wpdb->get_var($total_query);
+
+        // Get logs
+        $query = "SELECT * FROM {$table_name} WHERE {$where_clause} ORDER BY created_at DESC LIMIT %d OFFSET %d";
+        $query_values = array_merge($where_values, array($per_page, $offset));
+        $logs = $wpdb->get_results($wpdb->prepare($query, $query_values));
+
+        wp_send_json_success(array(
+            'logs' => $logs,
+            'total' => $total,
+            'pages' => ceil($total / $per_page),
+            'current_page' => $page
+        ));
+    }
+
+    /**
+     * AJAX handler for clearing API logs
+     */
+    public function ajax_clear_api_logs() {
+        check_ajax_referer('sap_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'seo-analytics-pro')));
+        }
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sap_api_logs';
+
+        $days = isset($_POST['days']) ? absint($_POST['days']) : 0;
+
+        if ($days > 0) {
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$table_name} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
+                $days
+            ));
+            $message = sprintf(__('Logs older than %d days cleared', 'seo-analytics-pro'), $days);
+        } else {
+            $wpdb->query("TRUNCATE TABLE {$table_name}");
+            $message = __('All logs cleared', 'seo-analytics-pro');
+        }
+
+        wp_send_json_success(array('message' => $message));
+    }
+
+    /**
+     * Display API Logs page
+     */
+    public function display_logs_page() {
+        ?>
+        <div class="wrap sap-wrap">
+            <h1><?php _e('API Logs', 'seo-analytics-pro'); ?></h1>
+
+            <div class="sap-toolbar">
+                <div class="sap-filters">
+                    <select id="log-service-filter">
+                        <option value=""><?php _e('All Services', 'seo-analytics-pro'); ?></option>
+                        <option value="Claude"><?php _e('Claude AI', 'seo-analytics-pro'); ?></option>
+                        <option value="SERP"><?php _e('SERP API', 'seo-analytics-pro'); ?></option>
+                    </select>
+                    <select id="log-status-filter">
+                        <option value=""><?php _e('All Statuses', 'seo-analytics-pro'); ?></option>
+                        <option value="success"><?php _e('Success', 'seo-analytics-pro'); ?></option>
+                        <option value="error"><?php _e('Error', 'seo-analytics-pro'); ?></option>
+                    </select>
+                    <button class="button" id="filter-logs"><?php _e('Filter', 'seo-analytics-pro'); ?></button>
+                </div>
+                <div class="sap-actions">
+                    <button class="button" id="refresh-logs"><?php _e('Refresh', 'seo-analytics-pro'); ?></button>
+                    <button class="button" id="clear-old-logs"><?php _e('Clear 30+ Days', 'seo-analytics-pro'); ?></button>
+                    <button class="button button-link-delete" id="clear-all-logs"><?php _e('Clear All', 'seo-analytics-pro'); ?></button>
+                </div>
+            </div>
+
+            <div class="sap-stats-row" id="log-stats">
+                <div class="sap-stat-box">
+                    <span class="stat-label"><?php _e('Total Requests', 'seo-analytics-pro'); ?></span>
+                    <span class="stat-value" id="stat-total">-</span>
+                </div>
+                <div class="sap-stat-box">
+                    <span class="stat-label"><?php _e('Success Rate', 'seo-analytics-pro'); ?></span>
+                    <span class="stat-value" id="stat-success-rate">-</span>
+                </div>
+                <div class="sap-stat-box">
+                    <span class="stat-label"><?php _e('Total Tokens', 'seo-analytics-pro'); ?></span>
+                    <span class="stat-value" id="stat-tokens">-</span>
+                </div>
+                <div class="sap-stat-box">
+                    <span class="stat-label"><?php _e('Est. Cost', 'seo-analytics-pro'); ?></span>
+                    <span class="stat-value" id="stat-cost">-</span>
+                </div>
+            </div>
+
+            <table class="wp-list-table widefat fixed striped sap-logs-table">
+                <thead>
+                    <tr>
+                        <th width="140"><?php _e('Date/Time', 'seo-analytics-pro'); ?></th>
+                        <th width="120"><?php _e('Service', 'seo-analytics-pro'); ?></th>
+                        <th><?php _e('Endpoint', 'seo-analytics-pro'); ?></th>
+                        <th width="80"><?php _e('Status', 'seo-analytics-pro'); ?></th>
+                        <th width="80"><?php _e('Time', 'seo-analytics-pro'); ?></th>
+                        <th width="80"><?php _e('Tokens', 'seo-analytics-pro'); ?></th>
+                        <th width="60"><?php _e('Actions', 'seo-analytics-pro'); ?></th>
+                    </tr>
+                </thead>
+                <tbody id="logs-body">
+                    <tr>
+                        <td colspan="7" class="sap-loading"><?php _e('Loading logs...', 'seo-analytics-pro'); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="sap-pagination" id="logs-pagination"></div>
+
+            <!-- Log Details Modal -->
+            <div id="log-details-modal" class="sap-modal" style="display:none;">
+                <div class="sap-modal-content">
+                    <span class="sap-modal-close">&times;</span>
+                    <h2><?php _e('Log Details', 'seo-analytics-pro'); ?></h2>
+                    <div class="sap-modal-body">
+                        <h3><?php _e('Request', 'seo-analytics-pro'); ?></h3>
+                        <pre id="log-request"></pre>
+                        <h3><?php _e('Response', 'seo-analytics-pro'); ?></h3>
+                        <pre id="log-response"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        .sap-stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .sap-stat-box { background: #fff; padding: 15px 20px; border: 1px solid #ccd0d4; border-radius: 4px; }
+        .stat-label { display: block; color: #646970; font-size: 12px; }
+        .stat-value { display: block; font-size: 24px; font-weight: 600; color: #1d2327; }
+        .sap-logs-table .status-success { color: #00a32a; }
+        .sap-logs-table .status-error { color: #d63638; }
+        .sap-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000; }
+        .sap-modal-content { background: #fff; max-width: 800px; margin: 50px auto; padding: 20px; border-radius: 4px; max-height: 80vh; overflow: auto; }
+        .sap-modal-close { float: right; font-size: 28px; cursor: pointer; }
+        .sap-modal pre { background: #f0f0f1; padding: 15px; overflow: auto; max-height: 300px; font-size: 12px; }
+        .sap-pagination { margin-top: 20px; text-align: center; }
+        .sap-pagination button { margin: 0 5px; }
+        .sap-view-log { cursor: pointer; color: #2271b1; }
+        </style>
+        <?php
     }
 }
