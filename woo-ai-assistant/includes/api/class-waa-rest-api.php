@@ -125,6 +125,30 @@ class WAA_REST_API {
                 ),
             ),
         ));
+
+        // Track click endpoint
+        register_rest_route($namespace, '/track', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'handle_track'),
+            'permission_callback' => '__return_true',
+            'args' => array(
+                'session_id' => array(
+                    'required' => true,
+                    'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'product_id' => array(
+                    'required' => true,
+                    'type' => 'integer',
+                ),
+                'event_type' => array(
+                    'required' => true,
+                    'type' => 'string',
+                    'enum' => array('click', 'add_to_cart'),
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ));
     }
 
     /**
@@ -320,6 +344,41 @@ class WAA_REST_API {
         return rest_ensure_response(array(
             'success' => true,
             'message' => __('Feedback saved', 'woo-ai-assistant'),
+        ));
+    }
+
+    /**
+     * Handle click tracking
+     */
+    public function handle_track($request) {
+        global $wpdb;
+
+        $session_id = $request->get_param('session_id');
+        $product_id = $request->get_param('product_id');
+        $event_type = $request->get_param('event_type');
+
+        // Insert tracking record
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'waa_click_stats',
+            array(
+                'session_id' => $session_id,
+                'product_id' => $product_id,
+                'event_type' => $event_type,
+                'created_at' => current_time('mysql'),
+            ),
+            array('%s', '%d', '%s', '%s')
+        );
+
+        if ($result === false) {
+            return new WP_Error(
+                'db_error',
+                __('Failed to track event', 'woo-ai-assistant'),
+                array('status' => 500)
+            );
+        }
+
+        return rest_ensure_response(array(
+            'success' => true,
         ));
     }
 

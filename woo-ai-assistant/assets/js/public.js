@@ -186,7 +186,7 @@
                         }
 
                         // Product link with image and info
-                        var $link = $('<a href="' + product.url + '" class="waa-product-card-link" target="_blank"></a>');
+                        var $link = $('<a href="' + product.url + '" class="waa-product-card-link" target="_blank" data-product-id="' + product.id + '"></a>');
                         if (product.image) {
                             $link.append('<img src="' + product.image + '" alt="" class="waa-product-card-image">');
                         }
@@ -281,6 +281,9 @@
                             $btn.removeClass('adding').addClass('added');
                             $btn.html(waaConfig.i18n.added + ' <a href="' + waaConfig.cartUrl + '">' + waaConfig.i18n.viewCart + '</a>');
 
+                            // Track add to cart event
+                            trackEvent(productId, 'add_to_cart');
+
                             // Update cart fragments if available
                             if (response.fragments) {
                                 $.each(response.fragments, function(key, value) {
@@ -306,6 +309,14 @@
                 $cards.find('.waa-hidden-card').removeClass('waa-hidden-card');
                 $btn.remove();
                 scrollToBottom();
+            });
+
+            // Track product link clicks
+            $messages.on('click', '.waa-product-card-link', function() {
+                var productId = $(this).data('product-id');
+                if (productId) {
+                    trackEvent(productId, 'click');
+                }
             });
 
             function showFeedbackForm(messageId, $feedback) {
@@ -368,7 +379,21 @@
             }
 
             function formatPrice(price) {
-                return parseFloat(price).toLocaleString() + ' ₴';
+                return parseFloat(price).toLocaleString() + ' грн';
+            }
+
+            // Track event (click or add_to_cart)
+            function trackEvent(productId, eventType) {
+                $.ajax({
+                    url: waaConfig.restUrl + 'track',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        session_id: sessionId,
+                        product_id: productId,
+                        event_type: eventType
+                    })
+                });
             }
         });
     }

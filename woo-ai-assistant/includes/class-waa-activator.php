@@ -77,10 +77,26 @@ class WAA_Activator {
             PRIMARY KEY (id)
         ) $charset_collate;";
 
+        // Click statistics table
+        $table_stats = $wpdb->prefix . 'waa_click_stats';
+        $sql_stats = "CREATE TABLE $table_stats (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            session_id varchar(64) NOT NULL,
+            product_id bigint(20) NOT NULL,
+            event_type varchar(20) NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY session_id (session_id),
+            KEY product_id (product_id),
+            KEY event_type (event_type),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql_vectors);
         dbDelta($sql_chats);
         dbDelta($sql_index);
+        dbDelta($sql_stats);
 
         // Insert initial index status
         $wpdb->replace($table_index, array(

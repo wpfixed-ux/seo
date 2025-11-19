@@ -59,6 +59,15 @@ class WAA_Admin {
             'waa-logs',
             array($this, 'render_logs')
         );
+
+        add_submenu_page(
+            'waa-dashboard',
+            __('Статистика', 'woo-ai-assistant'),
+            __('Статистика', 'woo-ai-assistant'),
+            'manage_options',
+            'waa-statistics',
+            array($this, 'render_statistics')
+        );
     }
 
     public function render_dashboard() {
@@ -450,5 +459,221 @@ class WAA_Admin {
         header('Content-Disposition: attachment; filename="waa-training-data-' . date('Y-m-d') . '.json"');
         echo json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
+    }
+
+    public function render_statistics() {
+        global $wpdb;
+
+        $stats_table = $wpdb->prefix . 'waa_click_stats';
+
+        // Date filter
+        $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : date('Y-m-d', strtotime('-30 days'));
+        $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : date('Y-m-d');
+
+        // Total statistics
+        $total_clicks = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $stats_table WHERE event_type = 'click' AND created_at BETWEEN %s AND %s",
+            $date_from . ' 00:00:00',
+            $date_to . ' 23:59:59'
+        ));
+
+        $total_add_to_cart = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $stats_table WHERE event_type = 'add_to_cart' AND created_at BETWEEN %s AND %s",
+            $date_from . ' 00:00:00',
+            $date_to . ' 23:59:59'
+        ));
+
+        $unique_sessions = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(DISTINCT session_id) FROM $stats_table WHERE created_at BETWEEN %s AND %s",
+            $date_from . ' 00:00:00',
+            $date_to . ' 23:59:59'
+        ));
+
+        // Top products by clicks
+        $top_clicks = $wpdb->get_results($wpdb->prepare(
+            "SELECT product_id, COUNT(*) as click_count
+             FROM $stats_table
+             WHERE event_type = 'click' AND created_at BETWEEN %s AND %s
+             GROUP BY product_id
+             ORDER BY click_count DESC
+             LIMIT 10",
+            $date_from . ' 00:00:00',
+            $date_to . ' 23:59:59'
+        ));
+
+        // Top products by add to cart
+        $top_cart = $wpdb->get_results($wpdb->prepare(
+            "SELECT product_id, COUNT(*) as cart_count
+             FROM $stats_table
+             WHERE event_type = 'add_to_cart' AND created_at BETWEEN %s AND %s
+             GROUP BY product_id
+             ORDER BY cart_count DESC
+             LIMIT 10",
+            $date_from . ' 00:00:00',
+            $date_to . ' 23:59:59'
+        ));
+
+        // Daily stats for chart
+        $daily_stats = $wpdb->get_results($wpdb->prepare(
+            "SELECT DATE(created_at) as date,
+                    SUM(CASE WHEN event_type = 'click' THEN 1 ELSE 0 END) as clicks,
+                    SUM(CASE WHEN event_type = 'add_to_cart' THEN 1 ELSE 0 END) as add_to_cart
+             FROM $stats_table
+             WHERE created_at BETWEEN %s AND %s
+             GROUP BY DATE(created_at)
+             ORDER BY date ASC",
+            $date_from . ' 00:00:00',
+            $date_to . ' 23:59:59'
+        ));
+
+        ?>
+        <div class="wrap waa-admin-wrap">
+            <h1><?php _e('Статистика чата', 'woo-ai-assistant'); ?></h1>
+
+            <!-- Date Filter -->
+            <div class="waa-stats-filter">
+                <form method="get">
+                    <input type="hidden" name="page" value="waa-statistics">
+                    <label><?php _e('С:', 'woo-ai-assistant'); ?></label>
+                    <input type="date" name="date_from" value="<?php echo esc_attr($date_from); ?>">
+                    <label><?php _e('По:', 'woo-ai-assistant'); ?></label>
+                    <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>">
+                    <button type="submit" class="button"><?php _e('Применить', 'woo-ai-assistant'); ?></button>
+                </form>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="waa-stats-summary">
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo esc_html($total_clicks); ?></div>
+                    <div class="waa-stat-label"><?php _e('Переходов на товары', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo esc_html($total_add_to_cart); ?></div>
+                    <div class="waa-stat-label"><?php _e('Добавлений в корзину', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo esc_html($unique_sessions); ?></div>
+                    <div class="waa-stat-label"><?php _e('Уникальных сессий', 'woo-ai-assistant'); ?></div>
+                </div>
+                <div class="waa-stat-card">
+                    <div class="waa-stat-number"><?php echo $total_clicks > 0 ? round(($total_add_to_cart / $total_clicks) * 100, 1) : 0; ?>%</div>
+                    <div class="waa-stat-label"><?php _e('Конверсия в корзину', 'woo-ai-assistant'); ?></div>
+                </div>
+            </div>
+
+            <div class="waa-stats-grid">
+                <!-- Top Products by Clicks -->
+                <div class="waa-card">
+                    <h3><?php _e('Топ товаров по переходам', 'woo-ai-assistant'); ?></h3>
+                    <?php if (empty($top_clicks)): ?>
+                        <p><?php _e('Нет данных', 'woo-ai-assistant'); ?></p>
+                    <?php else: ?>
+                        <table class="widefat">
+                            <thead>
+                                <tr>
+                                    <th><?php _e('Товар', 'woo-ai-assistant'); ?></th>
+                                    <th><?php _e('Переходы', 'woo-ai-assistant'); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($top_clicks as $item): ?>
+                                    <?php $product = wc_get_product($item->product_id); ?>
+                                    <tr>
+                                        <td>
+                                            <?php if ($product): ?>
+                                                <a href="<?php echo esc_url(get_edit_post_link($item->product_id)); ?>">
+                                                    <?php echo esc_html($product->get_name()); ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <?php echo esc_html($item->product_id); ?> (<?php _e('удалён', 'woo-ai-assistant'); ?>)
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><strong><?php echo esc_html($item->click_count); ?></strong></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Top Products by Add to Cart -->
+                <div class="waa-card">
+                    <h3><?php _e('Топ товаров по добавлению в корзину', 'woo-ai-assistant'); ?></h3>
+                    <?php if (empty($top_cart)): ?>
+                        <p><?php _e('Нет данных', 'woo-ai-assistant'); ?></p>
+                    <?php else: ?>
+                        <table class="widefat">
+                            <thead>
+                                <tr>
+                                    <th><?php _e('Товар', 'woo-ai-assistant'); ?></th>
+                                    <th><?php _e('Добавлений', 'woo-ai-assistant'); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($top_cart as $item): ?>
+                                    <?php $product = wc_get_product($item->product_id); ?>
+                                    <tr>
+                                        <td>
+                                            <?php if ($product): ?>
+                                                <a href="<?php echo esc_url(get_edit_post_link($item->product_id)); ?>">
+                                                    <?php echo esc_html($product->get_name()); ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <?php echo esc_html($item->product_id); ?> (<?php _e('удалён', 'woo-ai-assistant'); ?>)
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><strong><?php echo esc_html($item->cart_count); ?></strong></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Daily Chart Data (for future chart implementation) -->
+            <?php if (!empty($daily_stats)): ?>
+            <div class="waa-card">
+                <h3><?php _e('Статистика по дням', 'woo-ai-assistant'); ?></h3>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Дата', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('Переходы', 'woo-ai-assistant'); ?></th>
+                            <th><?php _e('В корзину', 'woo-ai-assistant'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($daily_stats as $day): ?>
+                        <tr>
+                            <td><?php echo esc_html(date_i18n('d.m.Y', strtotime($day->date))); ?></td>
+                            <td><?php echo esc_html($day->clicks); ?></td>
+                            <td><?php echo esc_html($day->add_to_cart); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <style>
+            .waa-stats-filter { margin: 15px 0; }
+            .waa-stats-filter label { margin: 0 5px; }
+            .waa-stats-filter input[type="date"] { margin-right: 10px; }
+            .waa-stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+            .waa-stat-card { background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px; text-align: center; }
+            .waa-stat-number { font-size: 32px; font-weight: bold; color: #2271b1; }
+            .waa-stat-label { color: #50575e; margin-top: 5px; }
+            .waa-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .waa-card { background: #fff; padding: 15px; border: 1px solid #c3c4c7; border-radius: 4px; }
+            .waa-card h3 { margin-top: 0; }
+            @media (max-width: 782px) {
+                .waa-stats-summary { grid-template-columns: repeat(2, 1fr); }
+                .waa-stats-grid { grid-template-columns: 1fr; }
+            }
+        </style>
+        <?php
     }
 }
