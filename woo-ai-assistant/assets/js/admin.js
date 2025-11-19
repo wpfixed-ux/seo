@@ -156,10 +156,116 @@
         });
     }
 
+    // Test Connection
+    function initTestConnection() {
+        var $testBtn = $('#waa-test-connection');
+        var $result = $('#waa-test-result');
+
+        $testBtn.on('click', function() {
+            $testBtn.prop('disabled', true).text('Testing...');
+            $result.html('<span style="color: #666;">Connecting...</span>');
+
+            $.ajax({
+                url: waaAdmin.restUrl + 'test-connection',
+                method: 'POST',
+                headers: {
+                    'X-WP-Nonce': waaAdmin.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $result.html('<span style="color: green;">✓ ' + response.message + '</span>');
+                    } else {
+                        $result.html('<span style="color: red;">✗ ' + response.message + '</span>');
+                    }
+                },
+                error: function(xhr) {
+                    var message = 'Connection failed';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    $result.html('<span style="color: red;">✗ ' + message + '</span>');
+                },
+                complete: function() {
+                    $testBtn.prop('disabled', false).text('Test Connection');
+                }
+            });
+        });
+    }
+
+    // API Logs
+    function initApiLogs() {
+        var $loadBtn = $('#waa-load-logs');
+        var $clearBtn = $('#waa-clear-logs');
+        var $logsContainer = $('#waa-api-logs');
+
+        $loadBtn.on('click', function() {
+            $loadBtn.prop('disabled', true).text('Loading...');
+
+            $.ajax({
+                url: waaAdmin.restUrl + 'api-logs',
+                method: 'GET',
+                headers: {
+                    'X-WP-Nonce': waaAdmin.nonce
+                },
+                success: function(response) {
+                    if (response.success && response.logs) {
+                        if (response.logs.length === 0) {
+                            $logsContainer.html('<em>No logs available</em>').show();
+                        } else {
+                            var html = '';
+                            response.logs.forEach(function(log) {
+                                html += '<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">';
+                                html += '<strong>' + log.timestamp + '</strong> - ' + log.action + '\n';
+                                html += JSON.stringify(log.data, null, 2);
+                                html += '</div>';
+                            });
+                            $logsContainer.html(html).show();
+                        }
+                    } else {
+                        $logsContainer.html('<em>Failed to load logs</em>').show();
+                    }
+                },
+                error: function() {
+                    $logsContainer.html('<em>Error loading logs</em>').show();
+                },
+                complete: function() {
+                    $loadBtn.prop('disabled', false).text('Показать логи');
+                }
+            });
+        });
+
+        $clearBtn.on('click', function() {
+            if (!confirm('Clear all API logs?')) return;
+
+            $clearBtn.prop('disabled', true);
+
+            $.ajax({
+                url: waaAdmin.restUrl + 'api-logs',
+                method: 'DELETE',
+                headers: {
+                    'X-WP-Nonce': waaAdmin.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $logsContainer.html('<em>Logs cleared</em>').show();
+                        setTimeout(function() {
+                            $logsContainer.hide();
+                        }, 2000);
+                    }
+                },
+                complete: function() {
+                    $clearBtn.prop('disabled', false);
+                }
+            });
+        });
+    }
+
     // Initialize
     $(document).ready(function() {
         initTabs();
         initIndexing();
+        initTestConnection();
+        initApiLogs();
     });
 
 })(jQuery);

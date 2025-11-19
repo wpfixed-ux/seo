@@ -183,6 +183,33 @@ class WAA_REST_API {
                 ),
             ),
         ));
+
+        // Test connection endpoint (admin only)
+        register_rest_route($namespace, '/test-connection', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'handle_test_connection'),
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+        ));
+
+        // Get API logs endpoint (admin only)
+        register_rest_route($namespace, '/api-logs', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_api_logs'),
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+        ));
+
+        // Clear API logs endpoint (admin only)
+        register_rest_route($namespace, '/api-logs', array(
+            'methods' => 'DELETE',
+            'callback' => array($this, 'clear_api_logs'),
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+        ));
     }
 
     /**
@@ -449,5 +476,196 @@ class WAA_REST_API {
         }
 
         return sanitize_text_field($ip);
+    }
+
+    /**
+     * Handle test connection request
+     */
+    public function handle_test_connection($request) {
+        $provider = get_option('waa_ai_provider', 'openai');
+
+        // Log the test attempt
+        $this->log_api_call('test_connection', array(
+            'provider' => $provider,
+            'timestamp' => current_time('mysql'),
+        ));
+
+        try {
+            // Get the appropriate API key
+            switch ($provider) {
+                case 'openai':
+                    $api_key = get_option('waa_openai_api_key');
+                    if (empty($api_key)) {
+                        return rest_ensure_response(array(
+                            'success' => false,
+                            'message' => 'OpenAI API key is not configured',
+                        ));
+                    }
+
+                    // Test OpenAI connection
+                    $response = wp_remote_get('https://api.openai.com/v1/models', array(
+                        'headers' => array(
+                            'Authorization' => 'Bearer ' . $api_key,
+                        ),
+                        'timeout' => 15,
+                    ));
+                    break;
+
+                case 'claude':
+                    $api_key = get_option('waa_claude_api_key');
+                    if (empty($api_key)) {
+                        return rest_ensure_response(array(
+                            'success' => false,
+                            'message' => 'Claude API key is not configured',
+                        ));
+                    }
+
+                    // Test Claude connection with a simple message
+                    $response = wp_remote_post('https://api.anthropic.com/v1/messages', array(
+                        'headers' => array(
+                            'x-api-key' => $api_key,
+                            'anthropic-version' => '2023-06-01',
+                            'Content-Type' => 'application/json',
+                        ),
+                        'body' => json_encode(array(
+                            'model' => 'claude-3-haiku-20240307',
+                            'max_tokens' => 10,
+                            'messages' => array(
+                                array('role' => 'user', 'content' => 'Hi'),
+                            ),
+                        )),
+                        'timeout' => 15,
+                    ));
+                    break;
+
+                case 'kimi':
+                    $api_key = get_option('waa_kimi_api_key');
+                    if (empty($api_key)) {
+                        return rest_ensure_response(array(
+                            'success' => false,
+                            'message' => 'Kimi API key is not configured',
+                        ));
+                    }
+
+                    // Test Kimi connection
+                    $response = wp_remote_get('https://api.moonshot.cn/v1/models', array(
+                        'headers' => array(
+                            'Authorization' => 'Bearer ' . $api_key,
+                        ),
+                        'timeout' => 15,
+                    ));
+                    break;
+
+                default:
+                    return rest_ensure_response(array(
+                        'success' => false,
+                        'message' => 'Unknown AI provider: ' . $provider,
+                    ));
+            }
+
+            if (is_wp_error($response)) {
+                $this->log_api_call('test_connection_error', array(
+                    'provider' => $provider,
+                    'error' => $response->get_error_message(),
+                ));
+
+                return rest_ensure_response(array(
+                    'success' => false,
+                    'message' => 'Connection failed: ' . $response->get_error_message(),
+                ));
+            }
+
+            $status_code = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+
+            $this->log_api_call('test_connection_response', array(
+                'provider' => $provider,
+                'status_code' => $status_code,
+                'body_preview' => substr($body, 0, 500),
+            ));
+
+            if ($status_code === 200 || $status_code === 201) {
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => 'Connection successful! Provider: ' . ucfirst($provider),
+                    'status_code' => $status_code,
+                ));
+            } else {
+                $error_data = json_decode($body, true);
+                $error_message = isset($error_data['error']['message'])
+                    ? $error_data['error']['message']
+                    : 'HTTP ' . $status_code;
+
+                return rest_ensure_response(array(
+                    'success' => false,
+                    'message' => 'Connection failed: ' . $error_message,
+                    'status_code' => $status_code,
+                ));
+            }
+
+        } catch (Exception $e) {
+            $this->log_api_call('test_connection_exception', array(
+                'provider' => $provider,
+                'exception' => $e->getMessage(),
+            ));
+
+            return rest_ensure_response(array(
+                'success' => false,
+                'message' => 'Exception: ' . $e->getMessage(),
+            ));
+        }
+    }
+
+    /**
+     * Get API logs
+     */
+    public function get_api_logs($request) {
+        $logs = get_option('waa_api_logs', array());
+
+        // Return last 100 logs in reverse order (newest first)
+        $logs = array_slice(array_reverse($logs), 0, 100);
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'logs' => $logs,
+            'count' => count($logs),
+        ));
+    }
+
+    /**
+     * Clear API logs
+     */
+    public function clear_api_logs($request) {
+        update_option('waa_api_logs', array());
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'message' => 'Logs cleared successfully',
+        ));
+    }
+
+    /**
+     * Log API call
+     */
+    public function log_api_call($action, $data) {
+        $logs = get_option('waa_api_logs', array());
+
+        $log_entry = array(
+            'timestamp' => current_time('mysql'),
+            'action' => $action,
+            'data' => $data,
+        );
+
+        $logs[] = $log_entry;
+
+        // Keep only last 500 logs
+        if (count($logs) > 500) {
+            $logs = array_slice($logs, -500);
+        }
+
+        update_option('waa_api_logs', $logs);
+
+        // Also log to error_log for debugging
+        error_log('WAA API Log: ' . $action . ' - ' . json_encode($data));
     }
 }

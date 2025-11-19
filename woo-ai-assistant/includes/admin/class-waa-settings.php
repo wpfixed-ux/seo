@@ -187,6 +187,28 @@ class WAA_Settings {
                                     <p class="description"><?php _e('Количество товаров в контексте', 'woo-ai-assistant'); ?></p>
                                 </td>
                             </tr>
+                            <tr>
+                                <th><?php _e('Проверка подключения', 'woo-ai-assistant'); ?></th>
+                                <td>
+                                    <button type="button" id="waa-test-connection" class="button button-secondary">
+                                        <?php _e('Test Connection', 'woo-ai-assistant'); ?>
+                                    </button>
+                                    <span id="waa-test-result" style="margin-left: 10px;"></span>
+                                    <p class="description"><?php _e('Проверить подключение к выбранному AI провайдеру', 'woo-ai-assistant'); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><?php _e('API Логи', 'woo-ai-assistant'); ?></th>
+                                <td>
+                                    <button type="button" id="waa-load-logs" class="button button-secondary">
+                                        <?php _e('Показать логи', 'woo-ai-assistant'); ?>
+                                    </button>
+                                    <button type="button" id="waa-clear-logs" class="button button-secondary" style="margin-left: 5px;">
+                                        <?php _e('Очистить логи', 'woo-ai-assistant'); ?>
+                                    </button>
+                                    <div id="waa-api-logs" style="margin-top: 10px; max-height: 400px; overflow-y: auto; background: #f5f5f5; padding: 10px; display: none; font-family: monospace; font-size: 12px; white-space: pre-wrap;"></div>
+                                </td>
+                            </tr>
                         </table>
                     </div>
 
