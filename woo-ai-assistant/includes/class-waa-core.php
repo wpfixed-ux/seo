@@ -139,6 +139,7 @@ class WAA_Core {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'restUrl' => rest_url('waa/v1/'),
             'nonce' => wp_create_nonce('waa_admin_nonce'),
+            'restNonce' => wp_create_nonce('wp_rest'),
             'i18n' => array(
                 'indexing' => __('Индексация...', 'woo-ai-assistant'),
                 'indexed' => __('Проиндексировано', 'woo-ai-assistant'),

@@ -169,7 +169,7 @@
                 url: waaAdmin.restUrl + 'test-connection',
                 method: 'POST',
                 headers: {
-                    'X-WP-Nonce': waaAdmin.nonce
+                    'X-WP-Nonce': waaAdmin.restNonce
                 },
                 success: function(response) {
                     if (response.success) {
@@ -205,7 +205,7 @@
                 url: waaAdmin.restUrl + 'api-logs',
                 method: 'GET',
                 headers: {
-                    'X-WP-Nonce': waaAdmin.nonce
+                    'X-WP-Nonce': waaAdmin.restNonce
                 },
                 success: function(response) {
                     if (response.success && response.logs) {
@@ -243,7 +243,7 @@
                 url: waaAdmin.restUrl + 'api-logs',
                 method: 'DELETE',
                 headers: {
-                    'X-WP-Nonce': waaAdmin.nonce
+                    'X-WP-Nonce': waaAdmin.restNonce
                 },
                 success: function(response) {
                     if (response.success) {
