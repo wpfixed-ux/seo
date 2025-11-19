@@ -155,58 +155,76 @@ class WAA_REST_API {
      * Handle chat request
      */
     public function handle_chat($request) {
-        // Rate limiting
-        $ip = $this->get_client_ip();
-        $rate_key = 'waa_rate_' . md5($ip);
-        $rate_count = get_transient($rate_key);
+        error_log('WAA REST: Chat endpoint called');
 
-        if ($rate_count && $rate_count > 30) {
+        try {
+            // Rate limiting
+            $ip = $this->get_client_ip();
+            $rate_key = 'waa_rate_' . md5($ip);
+            $rate_count = get_transient($rate_key);
+
+            if ($rate_count && $rate_count > 30) {
+                error_log('WAA REST: Rate limit exceeded for ' . $ip);
+                return new WP_Error(
+                    'rate_limit',
+                    __('Too many requests. Please wait a moment.', 'woo-ai-assistant'),
+                    array('status' => 429)
+                );
+            }
+
+            set_transient($rate_key, ($rate_count ? $rate_count + 1 : 1), MINUTE_IN_SECONDS);
+
+            $message = $request->get_param('message');
+            $session_id = $request->get_param('session_id');
+            $language = $request->get_param('language');
+
+            error_log('WAA REST: Message received: ' . substr($message, 0, 100));
+
+            // Generate session ID if not provided
+            if (empty($session_id)) {
+                $session_id = wp_generate_uuid4();
+            }
+
+            // Auto-detect language
+            $assistant = WAA_Assistant::get_instance();
+            if ($language === 'auto') {
+                $language = $assistant->detect_language($message);
+            }
+
+            error_log('WAA REST: Processing query with language: ' . $language);
+
+            // Process query
+            $result = $assistant->query($message, $session_id, $language);
+
+            if (!$result['success']) {
+                // Log error for debugging
+                error_log('WAA REST Error: ' . $result['error']);
+
+                return new WP_Error(
+                    'assistant_error',
+                    $result['error'],
+                    array('status' => 500)
+                );
+            }
+
+            error_log('WAA REST: Query successful');
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => $result['message'],
+                'message_id' => $result['message_id'],
+                'products' => $result['products'],
+                'session_id' => $session_id,
+                'language' => $language,
+            ));
+        } catch (Exception $e) {
+            error_log('WAA REST Fatal Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             return new WP_Error(
-                'rate_limit',
-                __('Too many requests. Please wait a moment.', 'woo-ai-assistant'),
-                array('status' => 429)
-            );
-        }
-
-        set_transient($rate_key, ($rate_count ? $rate_count + 1 : 1), MINUTE_IN_SECONDS);
-
-        $message = $request->get_param('message');
-        $session_id = $request->get_param('session_id');
-        $language = $request->get_param('language');
-
-        // Generate session ID if not provided
-        if (empty($session_id)) {
-            $session_id = wp_generate_uuid4();
-        }
-
-        // Auto-detect language
-        $assistant = WAA_Assistant::get_instance();
-        if ($language === 'auto') {
-            $language = $assistant->detect_language($message);
-        }
-
-        // Process query
-        $result = $assistant->query($message, $session_id, $language);
-
-        if (!$result['success']) {
-            // Log error for debugging
-            error_log('WAA Chat Error: ' . $result['error']);
-
-            return new WP_Error(
-                'assistant_error',
-                $result['error'],
+                'internal_error',
+                'Internal server error: ' . $e->getMessage(),
                 array('status' => 500)
             );
         }
-
-        return rest_ensure_response(array(
-            'success' => true,
-            'message' => $result['message'],
-            'message_id' => $result['message_id'],
-            'products' => $result['products'],
-            'session_id' => $session_id,
-            'language' => $language,
-        ));
     }
 
     /**
