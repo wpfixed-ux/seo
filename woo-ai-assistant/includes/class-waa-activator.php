@@ -101,11 +101,55 @@ class WAA_Activator {
         dbDelta($sql_index);
         dbDelta($sql_stats);
 
+        // Add missing columns to existing tables (migration)
+        self::migrate_tables();
+
         // Insert initial index status
         $wpdb->replace($table_index, array(
             'id' => 1,
             'status' => 'idle'
         ));
+    }
+
+    /**
+     * Migrate existing tables - add new columns
+     */
+    private static function migrate_tables() {
+        global $wpdb;
+
+        $chat_table = $wpdb->prefix . 'waa_chat_history';
+
+        // Check if tokens_input column exists
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $chat_table LIKE 'tokens_input'");
+
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $chat_table ADD COLUMN tokens_input int(11) DEFAULT 0 AFTER language");
+            $wpdb->query("ALTER TABLE $chat_table ADD COLUMN tokens_output int(11) DEFAULT 0 AFTER tokens_input");
+            $wpdb->query("ALTER TABLE $chat_table ADD COLUMN cost decimal(10,6) DEFAULT 0 AFTER tokens_output");
+        }
+
+        // Check if click_stats table exists
+        $stats_table = $wpdb->prefix . 'waa_click_stats';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$stats_table'");
+
+        if (!$table_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql_stats = "CREATE TABLE $stats_table (
+                id bigint(20) NOT NULL AUTO_INCREMENT,
+                session_id varchar(64) NOT NULL,
+                product_id bigint(20) NOT NULL,
+                event_type varchar(20) NOT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY session_id (session_id),
+                KEY product_id (product_id),
+                KEY event_type (event_type),
+                KEY created_at (created_at)
+            ) $charset_collate;";
+
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+            dbDelta($sql_stats);
+        }
     }
 
     private static function set_default_options() {
