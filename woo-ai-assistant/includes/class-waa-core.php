@@ -98,7 +98,7 @@ class WAA_Core {
             'restUrl' => rest_url('waa/v1/'),
             'wcAjaxUrl' => WC()->ajax_url(),
             'cartUrl' => wc_get_cart_url(),
-            'nonce' => wp_create_nonce('waa_nonce'),
+            'nonce' => wp_create_nonce('wp_rest'),
             'i18n' => array(
                 'placeholder' => __('Задайте вопрос о товарах...', 'woo-ai-assistant'),
                 'send' => __('Отправить', 'woo-ai-assistant'),
