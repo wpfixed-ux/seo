@@ -58,6 +58,7 @@ final class WC_Product_Manager_Pro {
     public $crm;
     public $telegram;
     public $importer;
+    public $ai_commands;
 
     /**
      * Get instance
@@ -96,6 +97,7 @@ final class WC_Product_Manager_Pro {
         // AI Integrations
         require_once WCPMP_INCLUDES_DIR . 'ai/class-wcpmp-openai.php';
         require_once WCPMP_INCLUDES_DIR . 'ai/class-wcpmp-gemini.php';
+        require_once WCPMP_INCLUDES_DIR . 'ai/class-wcpmp-ai-commands.php';
 
         // Marketplace Integrations
         require_once WCPMP_INCLUDES_DIR . 'integrations/class-wcpmp-prom-ua.php';
@@ -151,6 +153,7 @@ final class WC_Product_Manager_Pro {
         $this->telegram = new WCPMP_Telegram_Bot();
         $this->api = new WCPMP_REST_API();
         $this->importer = new WCPMP_Importer();
+        $this->ai_commands = new WCPMP_AI_Commands();
     }
 
     /**
@@ -184,6 +187,10 @@ final class WC_Product_Manager_Pro {
         $this->loader->add_action('wp_ajax_wcpmp_import_woocommerce', $this->importer, 'ajax_import_woocommerce');
         $this->loader->add_action('wp_ajax_wcpmp_import_csv', $this->importer, 'ajax_import_csv');
         $this->loader->add_action('wp_ajax_wcpmp_import_store', $this->importer, 'ajax_import_store');
+
+        // AI Commands handlers
+        $this->loader->add_action('wp_ajax_wcpmp_ai_process_command', $this->ai_commands, 'ajax_process_command');
+        $this->loader->add_action('wp_ajax_wcpmp_ai_apply_changes', $this->ai_commands, 'ajax_apply_changes');
 
         // Cron jobs
         $this->loader->add_action('wcpmp_sync_inventory_cron', $this->sync, 'run_scheduled_sync');
