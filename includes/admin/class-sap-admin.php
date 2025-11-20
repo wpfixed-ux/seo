@@ -21,6 +21,7 @@ class SAP_Admin {
 
     public function enqueue_scripts() {
         wp_enqueue_script($this->plugin_name, SAP_ASSETS_URL . 'js/admin/admin.js', array('jquery'), $this->version, true);
+        wp_enqueue_script($this->plugin_name . '-image-gen', SAP_ASSETS_URL . 'js/admin/image-generator.js', array('jquery'), $this->version, true);
         wp_localize_script($this->plugin_name, 'sapData', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('sap_nonce'),
@@ -116,6 +117,10 @@ class SAP_Admin {
 
         if (isset($input['claude_ai_api_key'])) {
             $sanitized['claude_ai_api_key'] = sanitize_text_field($input['claude_ai_api_key']);
+        }
+
+        if (isset($input['gemini_api_key'])) {
+            $sanitized['gemini_api_key'] = sanitize_text_field($input['gemini_api_key']);
         }
 
         if (isset($input['serp_api_key'])) {
@@ -472,6 +477,21 @@ keyword 3"></textarea>
                     </div>
 
                     <div class="sap-form-row">
+                        <label for="gemini-api-key">
+                            <?php _e('Gemini AI API Key', 'seo-analytics-pro'); ?>
+                            <span class="sap-help">
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank"><?php _e('Get API Key', 'seo-analytics-pro'); ?></a>
+                            </span>
+                        </label>
+                        <input type="password"
+                               id="gemini-api-key"
+                               name="sap_settings[gemini_api_key]"
+                               value="<?php echo esc_attr($settings['gemini_api_key'] ?? ''); ?>"
+                               class="regular-text">
+                        <p class="description"><?php _e('Required for AI image generation (free tier available). Use "nano" model for free access.', 'seo-analytics-pro'); ?></p>
+                    </div>
+
+                    <div class="sap-form-row">
                         <label for="serp-api-provider"><?php _e('SERP API Provider', 'seo-analytics-pro'); ?></label>
                         <select id="serp-api-provider" name="sap_settings[serp_api_provider]">
                             <option value="serpapi" <?php selected($settings['serp_api_provider'] ?? '', 'serpapi'); ?>>SERPApi</option>
@@ -588,6 +608,7 @@ keyword 3"></textarea>
                 <div class="sap-form-actions">
                     <?php submit_button(__('Save Settings', 'seo-analytics-pro'), 'primary', 'submit', false); ?>
                     <button type="button" class="button" id="test-api-keys"><?php _e('Test API Keys', 'seo-analytics-pro'); ?></button>
+                    <button type="button" class="button" id="test-gemini-connection"><?php _e('Test Gemini API', 'seo-analytics-pro'); ?></button>
                 </div>
             </form>
 

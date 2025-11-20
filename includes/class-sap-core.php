@@ -75,6 +75,7 @@ class SAP_Core {
          */
         require_once SAP_INCLUDES_DIR . 'api/class-sap-rest-api.php';
         require_once SAP_INCLUDES_DIR . 'api/class-sap-claude-ai.php';
+        require_once SAP_INCLUDES_DIR . 'api/class-sap-gemini-ai.php';
         require_once SAP_INCLUDES_DIR . 'api/class-sap-scraper.php';
         require_once SAP_INCLUDES_DIR . 'api/class-sap-serp.php';
 
@@ -104,6 +105,7 @@ class SAP_Core {
          * Generator classes
          */
         require_once SAP_INCLUDES_DIR . 'generators/class-sap-content-generator.php';
+        require_once SAP_INCLUDES_DIR . 'generators/class-sap-image-generator.php';
 
         /**
          * Model classes
@@ -148,6 +150,10 @@ class SAP_Core {
         // Metabox AJAX handlers
         $this->loader->add_action('wp_ajax_sap_generate_metabox_content', $plugin_admin, 'ajax_generate_metabox_content');
         $this->loader->add_action('wp_ajax_sap_generate_term_content', $plugin_admin, 'ajax_generate_term_content');
+
+        // Image generator
+        $image_generator = new SAP_Image_Generator();
+        $image_generator->init();
     }
 
     /**
