@@ -1,22 +1,86 @@
 <?php
 /**
- * AI Client for Claude API
+ * AI Client with multi-provider support (Claude, OpenAI, Kimi)
  *
  * @package AIMarketingAssistant
  */
 
 class AIMA_AI_Client {
 
+    private $provider;
     private $api_key;
     private $model;
-    private $api_url = 'https://api.anthropic.com/v1/messages';
+    private $api_url;
+
+    /**
+     * Available AI providers and their models
+     */
+    private $providers = array(
+        'anthropic' => array(
+            'name' => 'Claude (Anthropic)',
+            'api_url' => 'https://api.anthropic.com/v1/messages',
+            'models' => array(
+                'claude-3-5-sonnet-20241022' => 'Claude 3.5 Sonnet (Latest)',
+                'claude-3-5-sonnet-20240620' => 'Claude 3.5 Sonnet',
+                'claude-3-opus-20240229' => 'Claude 3 Opus',
+                'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
+                'claude-3-haiku-20240307' => 'Claude 3 Haiku'
+            )
+        ),
+        'openai' => array(
+            'name' => 'OpenAI',
+            'api_url' => 'https://api.openai.com/v1/chat/completions',
+            'models' => array(
+                'gpt-4-turbo' => 'GPT-4 Turbo',
+                'gpt-4-turbo-preview' => 'GPT-4 Turbo Preview',
+                'gpt-4' => 'GPT-4',
+                'gpt-4-0125-preview' => 'GPT-4 0125 Preview',
+                'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
+                'gpt-3.5-turbo-16k' => 'GPT-3.5 Turbo 16K'
+            )
+        ),
+        'kimi' => array(
+            'name' => 'Kimi (Moonshot AI)',
+            'api_url' => 'https://api.moonshot.cn/v1/chat/completions',
+            'models' => array(
+                'moonshot-v1-8k' => 'Moonshot v1 8K',
+                'moonshot-v1-32k' => 'Moonshot v1 32K',
+                'moonshot-v1-128k' => 'Moonshot v1 128K'
+            )
+        )
+    );
 
     /**
      * Constructor
      */
     public function __construct() {
+        $this->provider = get_option('aima_ai_provider', 'anthropic');
         $this->api_key = get_option('aima_ai_api_key');
-        $this->model = get_option('aima_ai_model', 'claude-3-5-sonnet-20241022');
+        $this->model = get_option('aima_ai_model', $this->get_default_model());
+        $this->api_url = $this->providers[$this->provider]['api_url'] ?? '';
+    }
+
+    /**
+     * Get available providers
+     */
+    public function get_providers() {
+        return $this->providers;
+    }
+
+    /**
+     * Get models for specific provider
+     */
+    public function get_models($provider = null) {
+        $provider = $provider ?? $this->provider;
+        return $this->providers[$provider]['models'] ?? array();
+    }
+
+    /**
+     * Get default model for current provider
+     */
+    private function get_default_model() {
+        $models = $this->get_models($this->provider);
+        return !empty($models) ? array_key_first($models) : '';
     }
 
     /**
@@ -180,9 +244,28 @@ class AIMA_AI_Client {
     }
 
     /**
-     * Call Claude API
+     * Call AI API (unified for all providers)
      */
     private function call_api($system_prompt, $user_message, $max_tokens = 2000) {
+        switch ($this->provider) {
+            case 'anthropic':
+                return $this->call_anthropic_api($system_prompt, $user_message, $max_tokens);
+            case 'openai':
+                return $this->call_openai_api($system_prompt, $user_message, $max_tokens);
+            case 'kimi':
+                return $this->call_kimi_api($system_prompt, $user_message, $max_tokens);
+            default:
+                return array(
+                    'success' => false,
+                    'error' => 'Unknown provider: ' . $this->provider
+                );
+        }
+    }
+
+    /**
+     * Call Anthropic (Claude) API
+     */
+    private function call_anthropic_api($system_prompt, $user_message, $max_tokens) {
         $body = array(
             'model' => $this->model,
             'max_tokens' => $max_tokens,
@@ -202,13 +285,14 @@ class AIMA_AI_Client {
                 'anthropic-version' => '2023-06-01'
             ),
             'body' => json_encode($body),
-            'timeout' => 30
+            'timeout' => 60
         ));
 
         if (is_wp_error($response)) {
             return array(
                 'success' => false,
-                'error' => $response->get_error_message()
+                'error' => $response->get_error_message(),
+                'provider' => 'anthropic'
             );
         }
 
@@ -219,7 +303,8 @@ class AIMA_AI_Client {
             return array(
                 'success' => false,
                 'error' => "API error: {$response_code}",
-                'details' => $response_body
+                'details' => $response_body,
+                'provider' => 'anthropic'
             );
         }
 
@@ -228,14 +313,178 @@ class AIMA_AI_Client {
         if (!isset($data['content'][0]['text'])) {
             return array(
                 'success' => false,
-                'error' => 'Invalid API response format'
+                'error' => 'Invalid API response format',
+                'provider' => 'anthropic'
             );
         }
 
         return array(
             'success' => true,
             'content' => $data['content'][0]['text'],
-            'usage' => $data['usage'] ?? array()
+            'usage' => $data['usage'] ?? array(),
+            'provider' => 'anthropic',
+            'model' => $this->model
+        );
+    }
+
+    /**
+     * Call OpenAI API
+     */
+    private function call_openai_api($system_prompt, $user_message, $max_tokens) {
+        $body = array(
+            'model' => $this->model,
+            'max_tokens' => $max_tokens,
+            'messages' => array(
+                array(
+                    'role' => 'system',
+                    'content' => $system_prompt
+                ),
+                array(
+                    'role' => 'user',
+                    'content' => $user_message
+                )
+            ),
+            'temperature' => 0.7
+        );
+
+        $response = wp_remote_post($this->api_url, array(
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $this->api_key
+            ),
+            'body' => json_encode($body),
+            'timeout' => 60
+        ));
+
+        if (is_wp_error($response)) {
+            return array(
+                'success' => false,
+                'error' => $response->get_error_message(),
+                'provider' => 'openai'
+            );
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+
+        if ($response_code !== 200) {
+            return array(
+                'success' => false,
+                'error' => "API error: {$response_code}",
+                'details' => $response_body,
+                'provider' => 'openai'
+            );
+        }
+
+        $data = json_decode($response_body, true);
+
+        if (!isset($data['choices'][0]['message']['content'])) {
+            return array(
+                'success' => false,
+                'error' => 'Invalid API response format',
+                'provider' => 'openai'
+            );
+        }
+
+        return array(
+            'success' => true,
+            'content' => $data['choices'][0]['message']['content'],
+            'usage' => $data['usage'] ?? array(),
+            'provider' => 'openai',
+            'model' => $this->model
+        );
+    }
+
+    /**
+     * Call Kimi (Moonshot AI) API
+     */
+    private function call_kimi_api($system_prompt, $user_message, $max_tokens) {
+        $body = array(
+            'model' => $this->model,
+            'max_tokens' => $max_tokens,
+            'messages' => array(
+                array(
+                    'role' => 'system',
+                    'content' => $system_prompt
+                ),
+                array(
+                    'role' => 'user',
+                    'content' => $user_message
+                )
+            ),
+            'temperature' => 0.7
+        );
+
+        $response = wp_remote_post($this->api_url, array(
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $this->api_key
+            ),
+            'body' => json_encode($body),
+            'timeout' => 60
+        ));
+
+        if (is_wp_error($response)) {
+            return array(
+                'success' => false,
+                'error' => $response->get_error_message(),
+                'provider' => 'kimi'
+            );
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+
+        if ($response_code !== 200) {
+            return array(
+                'success' => false,
+                'error' => "API error: {$response_code}",
+                'details' => $response_body,
+                'provider' => 'kimi'
+            );
+        }
+
+        $data = json_decode($response_body, true);
+
+        if (!isset($data['choices'][0]['message']['content'])) {
+            return array(
+                'success' => false,
+                'error' => 'Invalid API response format',
+                'provider' => 'kimi'
+            );
+        }
+
+        return array(
+            'success' => true,
+            'content' => $data['choices'][0]['message']['content'],
+            'usage' => $data['usage'] ?? array(),
+            'provider' => 'kimi',
+            'model' => $this->model
+        );
+    }
+
+    /**
+     * Test API connection
+     */
+    public function test_connection() {
+        $test_prompt = "Ответь одним словом: OK";
+        $response = $this->generate_content($test_prompt);
+
+        if ($response['success']) {
+            return array(
+                'success' => true,
+                'message' => __('Connection successful!', 'ai-marketing-assistant'),
+                'provider' => $response['provider'] ?? $this->provider,
+                'model' => $response['model'] ?? $this->model,
+                'response' => $response['content']
+            );
+        }
+
+        return array(
+            'success' => false,
+            'message' => $response['error'] ?? __('Connection failed', 'ai-marketing-assistant'),
+            'provider' => $this->provider,
+            'model' => $this->model
         );
     }
 
@@ -246,6 +495,8 @@ class AIMA_AI_Client {
         // Try to extract JSON from markdown code blocks
         if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
             $json_str = $matches[1];
+        } elseif (preg_match('/```\s*(.*?)\s*```/s', $content, $matches)) {
+            $json_str = $matches[1];
         } else {
             $json_str = $content;
         }
@@ -255,7 +506,7 @@ class AIMA_AI_Client {
         if (json_last_error() !== JSON_ERROR_NONE) {
             return array(
                 'success' => false,
-                'error' => 'Failed to parse JSON response'
+                'error' => 'Failed to parse JSON response: ' . json_last_error_msg()
             );
         }
 

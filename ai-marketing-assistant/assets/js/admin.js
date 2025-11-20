@@ -11,6 +11,7 @@
         initOfferGenerator();
         initCSVImport();
         initCampaignSender();
+        initAISettings();
     });
 
     /**
@@ -251,6 +252,100 @@
                 $(this).remove();
             });
         }, 5000);
+    }
+
+    /**
+     * Initialize AI settings handlers
+     */
+    function initAISettings() {
+        // Change AI provider - load models
+        $('#aima_ai_provider').on('change', function() {
+            const provider = $(this).val();
+            loadProviderModels(provider);
+        });
+
+        // Test API connection
+        $('#aima_test_api').on('click', function() {
+            const button = $(this);
+            const provider = $('#aima_ai_provider').val();
+            const model = $('#aima_ai_model').val();
+            const apiKey = $('#aima_ai_api_key').val();
+
+            if (!apiKey) {
+                showNotification('Please enter API key first', 'error');
+                return;
+            }
+
+            button.prop('disabled', true).html('<span class="aima-loading"></span> Testing...');
+            $('#aima_test_result').html('');
+
+            $.ajax({
+                url: aimaAjax.ajaxurl,
+                method: 'POST',
+                data: {
+                    action: 'aima_test_api',
+                    nonce: aimaAjax.nonce,
+                    provider: provider,
+                    model: model,
+                    api_key: apiKey
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const result = response.data;
+                        $('#aima_test_result').html(
+                            '<div class="aima-notification success">' +
+                            '✅ ' + result.message + '<br>' +
+                            '<strong>Provider:</strong> ' + result.provider + '<br>' +
+                            '<strong>Model:</strong> ' + result.model + '<br>' +
+                            '<strong>Response:</strong> ' + result.response +
+                            '</div>'
+                        );
+                    } else {
+                        $('#aima_test_result').html(
+                            '<div class="aima-notification error">' +
+                            '❌ ' + (response.data.message || 'Connection failed') +
+                            '</div>'
+                        );
+                    }
+                },
+                error: function() {
+                    $('#aima_test_result').html(
+                        '<div class="aima-notification error">❌ Network error</div>'
+                    );
+                },
+                complete: function() {
+                    button.prop('disabled', false).text('Test Connection');
+                }
+            });
+        });
+    }
+
+    /**
+     * Load models for selected provider
+     */
+    function loadProviderModels(provider) {
+        const modelsData = $('#aima_provider_models').data('providers');
+
+        if (!modelsData || !modelsData[provider]) {
+            return;
+        }
+
+        const models = modelsData[provider].models;
+        const $modelSelect = $('#aima_ai_model');
+
+        // Clear and repopulate model select
+        $modelSelect.empty();
+
+        $.each(models, function(modelKey, modelName) {
+            $modelSelect.append(
+                $('<option></option>')
+                    .attr('value', modelKey)
+                    .text(modelName)
+            );
+        });
+
+        // Select first model by default
+        $modelSelect.val(Object.keys(models)[0]);
     }
 
 })(jQuery);

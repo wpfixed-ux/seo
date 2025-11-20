@@ -67,6 +67,8 @@ class AIMA_Core {
         $this->loader->add_action('wp_ajax_aima_generate_offer', $admin, 'handle_generate_offer');
         $this->loader->add_action('wp_ajax_aima_send_campaign', $admin, 'handle_send_campaign');
         $this->loader->add_action('wp_ajax_aima_update_segment', $admin, 'handle_update_segment');
+        $this->loader->add_action('wp_ajax_aima_test_api', $admin, 'handle_test_api');
+        $this->loader->add_action('wp_ajax_aima_get_models', $admin, 'handle_get_models');
     }
 
     /**

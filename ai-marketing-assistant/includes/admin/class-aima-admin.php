@@ -226,4 +226,20 @@ class AIMA_Admin {
             wp_send_json_error(array('message' => __('Failed to update segment', 'ai-marketing-assistant')));
         }
     }
+
+    /**
+     * Handle test API connection AJAX
+     */
+    public function handle_test_api() {
+        $settings = new AIMA_Admin_Settings();
+        $settings->test_api_connection();
+    }
+
+    /**
+     * Handle get provider models AJAX
+     */
+    public function handle_get_models() {
+        $settings = new AIMA_Admin_Settings();
+        $settings->get_provider_models();
+    }
 }
