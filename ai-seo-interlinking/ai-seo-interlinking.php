@@ -75,6 +75,7 @@ function ail_init() {
     require_once AIL_PLUGIN_DIR . 'includes/class-scheduler.php';
     require_once AIL_PLUGIN_DIR . 'includes/class-multilang.php';
     require_once AIL_PLUGIN_DIR . 'includes/class-admin.php';
+    require_once AIL_PLUGIN_DIR . 'includes/class-dashboard-widget.php';
 
     // Initialize admin interface
     if (is_admin()) {
