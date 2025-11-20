@@ -52,6 +52,7 @@ class AIMA_Core {
         require_once AIMA_MODULES_DIR . 'class-aima-email-queue.php';
         require_once AIMA_MODULES_DIR . 'class-aima-deduplication.php';
         require_once AIMA_MODULES_DIR . 'class-aima-data-cleanup.php';
+        require_once AIMA_MODULES_DIR . 'class-aima-campaign-analytics.php';
 
         $this->loader = new AIMA_Loader();
     }
@@ -79,6 +80,10 @@ class AIMA_Core {
      * Register public hooks
      */
     private function define_public_hooks() {
+        // Campaign analytics tracking
+        $analytics = new AIMA_Campaign_Analytics();
+        $this->loader->add_action('init', $analytics, 'handle_tracking_request');
+
         // WooCommerce integration
         if (class_exists('WooCommerce')) {
             $woo_integration = new AIMA_WooCommerce_Integration();

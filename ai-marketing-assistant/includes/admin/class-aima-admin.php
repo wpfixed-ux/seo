@@ -85,6 +85,11 @@ class AIMA_Admin {
         $segments = AIMA_Database::get_segments('active');
         $recent_offers = AIMA_Database::get_offers('sent');
 
+        // Get campaign analytics
+        require_once AIMA_MODULES_DIR . 'class-aima-campaign-analytics.php';
+        $campaign_analytics = new AIMA_Campaign_Analytics();
+        $top_campaigns = $campaign_analytics->get_top_campaigns(5);
+
         include AIMA_ADMIN_DIR . 'views/dashboard.php';
     }
 

@@ -8,6 +8,19 @@
 class AIMA_WooCommerce_Integration {
 
     /**
+     * Campaign analytics instance
+     */
+    private $analytics;
+
+    /**
+     * Constructor
+     */
+    public function __construct() {
+        require_once AIMA_MODULES_DIR . 'class-aima-campaign-analytics.php';
+        $this->analytics = new AIMA_Campaign_Analytics();
+    }
+
+    /**
      * Track new order
      */
     public function track_new_order($order_id) {
@@ -79,6 +92,9 @@ class AIMA_WooCommerce_Integration {
         if (!$customer) {
             return;
         }
+
+        // Track conversion from campaign (if applicable)
+        $this->analytics->track_conversion($order_id);
 
         // Recalculate customer analytics
         $analyzer = new AIMA_Customer_Analyzer();

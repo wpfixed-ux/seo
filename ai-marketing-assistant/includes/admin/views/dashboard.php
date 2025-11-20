@@ -108,6 +108,58 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <!-- Campaign Performance -->
+    <?php if (!empty($top_campaigns)): ?>
+    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px;">
+        <h2><?php _e('Top Performing Campaigns', 'ai-marketing-assistant'); ?></h2>
+        <table class="widefat" style="margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th><?php _e('Campaign', 'ai-marketing-assistant'); ?></th>
+                    <th><?php _e('Sent', 'ai-marketing-assistant'); ?></th>
+                    <th><?php _e('Opens', 'ai-marketing-assistant'); ?></th>
+                    <th><?php _e('Clicks', 'ai-marketing-assistant'); ?></th>
+                    <th><?php _e('Conversions', 'ai-marketing-assistant'); ?></th>
+                    <th><?php _e('Revenue', 'ai-marketing-assistant'); ?></th>
+                    <th><?php _e('ROI', 'ai-marketing-assistant'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($top_campaigns as $campaign): ?>
+                    <tr>
+                        <td><strong><?php echo esc_html($campaign->name); ?></strong><br/>
+                            <small style="color: #666;"><?php echo esc_html($campaign->type); ?> - <?php echo date_i18n('d.m.Y', strtotime($campaign->sent_at)); ?></small>
+                        </td>
+                        <td><?php echo number_format($campaign->sent_count); ?></td>
+                        <td>
+                            <?php echo number_format($campaign->unique_opens); ?><br/>
+                            <small style="color: #52c41a;"><?php echo number_format($campaign->open_rate, 1); ?>%</small>
+                        </td>
+                        <td>
+                            <?php echo number_format($campaign->unique_clicks); ?><br/>
+                            <small style="color: #1890ff;"><?php echo number_format($campaign->click_rate, 1); ?>%</small>
+                        </td>
+                        <td>
+                            <?php echo number_format($campaign->converted_count); ?><br/>
+                            <small style="color: #faad14;"><?php echo number_format($campaign->conversion_rate, 1); ?>%</small>
+                        </td>
+                        <td><strong><?php echo number_format($campaign->total_revenue, 0, ',', ' '); ?> ₽</strong><br/>
+                            <small style="color: #666;"><?php echo number_format($campaign->revenue_per_email, 0, ',', ' '); ?> ₽/email</small>
+                        </td>
+                        <td>
+                            <?php if ($campaign->roi > 0): ?>
+                                <span style="color: #52c41a; font-weight: bold;">+<?php echo number_format($campaign->roi, 0); ?>%</span>
+                            <?php else: ?>
+                                <span style="color: #999;">-</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php endif; ?>
+
     <!-- Quick Actions -->
     <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px;">
         <h2><?php _e('Quick Actions', 'ai-marketing-assistant'); ?></h2>

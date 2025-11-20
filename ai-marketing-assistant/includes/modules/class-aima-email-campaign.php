@@ -8,6 +8,19 @@
 class AIMA_Email_Campaign {
 
     /**
+     * Campaign analytics instance
+     */
+    private $analytics;
+
+    /**
+     * Constructor
+     */
+    public function __construct() {
+        require_once AIMA_MODULES_DIR . 'class-aima-campaign-analytics.php';
+        $this->analytics = new AIMA_Campaign_Analytics();
+    }
+
+    /**
      * Send campaign
      */
     public function send_campaign($offer_id) {
@@ -108,6 +121,9 @@ class AIMA_Email_Campaign {
         $from_name = get_option('aima_email_from_name', get_bloginfo('name'));
         $from_email = get_option('aima_email_from_email', get_bloginfo('admin_email'));
 
+        // Initialize analytics for campaign
+        $this->analytics->init_campaign_analytics($offer_id);
+
         foreach ($recipients as $recipient) {
             // Get customer data for personalization
             $customer = $wpdb->get_row($wpdb->prepare(
@@ -123,15 +139,12 @@ class AIMA_Email_Campaign {
             // Generate email content
             $email_content = $offer_generator->generate_email_content($offer_data, $customer_data);
 
-            // Add tracking pixel
-            $tracking_url = add_query_arg(
-                array(
-                    'aima_track' => 'open',
-                    'recipient_id' => $recipient->id
-                ),
-                home_url('/')
-            );
-            $email_content .= '<img src="' . esc_url($tracking_url) . '" width="1" height="1" />';
+            // Replace product links with tracking URLs
+            $email_content = $this->add_link_tracking($email_content, $offer_id, $recipient->email);
+
+            // Add tracking pixel for opens
+            $tracking_pixel = $this->analytics->get_tracking_pixel($offer_id, $recipient->email);
+            $email_content .= '<img src="' . esc_url($tracking_pixel) . '" width="1" height="1" style="display:none;" />';
 
             // Replace unsubscribe URL
             $unsubscribe_url = add_query_arg(
@@ -170,6 +183,9 @@ class AIMA_Email_Campaign {
                     array('%d')
                 );
                 $sent_count++;
+
+                // Track sent in analytics
+                $this->analytics->increment_sent_count($offer_id);
             } else {
                 $wpdb->update(
                     $recipients_table,
@@ -209,68 +225,42 @@ class AIMA_Email_Campaign {
     }
 
     /**
-     * Track email open
+     * Add tracking to all links in email content
+     *
+     * @param string $content Email HTML content
+     * @param int $offer_id Campaign ID
+     * @param string $email Customer email
+     * @return string Content with tracking links
      */
-    public function track_open($recipient_id) {
-        global $wpdb;
-        $recipients_table = $wpdb->prefix . 'aima_campaign_recipients';
+    private function add_link_tracking($content, $offer_id, $email) {
+        // Find all links in HTML
+        preg_match_all('/<a\s+(?:[^>]*?\s+)?href="([^"]*)"([^>]*)>(.*?)<\/a>/i', $content, $matches, PREG_SET_ORDER);
 
-        $wpdb->update(
-            $recipients_table,
-            array(
-                'status' => 'opened',
-                'opened_at' => current_time('mysql')
-            ),
-            array('id' => $recipient_id),
-            array('%s', '%s'),
-            array('%d')
-        );
+        foreach ($matches as $match) {
+            $original_url = $match[1];
+            $link_attributes = $match[2];
+            $link_text = $match[3];
 
-        // Update offer opened count
-        $recipient = $wpdb->get_row($wpdb->prepare(
-            "SELECT offer_id FROM $recipients_table WHERE id = %d",
-            $recipient_id
-        ));
+            // Skip if it's an unsubscribe link or anchor
+            if (strpos($original_url, '{unsubscribe_url}') !== false || strpos($original_url, '#') === 0) {
+                continue;
+            }
 
-        if ($recipient) {
-            $offers_table = $wpdb->prefix . 'aima_offers';
-            $wpdb->query($wpdb->prepare(
-                "UPDATE $offers_table SET opened_count = opened_count + 1 WHERE id = %d",
-                $recipient->offer_id
-            ));
+            // Generate tracking URL
+            $tracking_url = $this->analytics->get_tracking_url($offer_id, $original_url, strip_tags($link_text));
+
+            // Add email to tracking URL for better attribution
+            $tracking_url = add_query_arg('email', base64_encode($email), $tracking_url);
+
+            // Add UTM parameters
+            $tracking_url = $this->analytics->add_utm_params($tracking_url, $offer_id, 'email_link');
+
+            // Replace in content
+            $original_link = $match[0];
+            $new_link = '<a href="' . esc_url($tracking_url) . '"' . $link_attributes . '>' . $link_text . '</a>';
+            $content = str_replace($original_link, $new_link, $content);
         }
-    }
 
-    /**
-     * Track email click
-     */
-    public function track_click($recipient_id) {
-        global $wpdb;
-        $recipients_table = $wpdb->prefix . 'aima_campaign_recipients';
-
-        $wpdb->update(
-            $recipients_table,
-            array(
-                'status' => 'clicked',
-                'clicked_at' => current_time('mysql')
-            ),
-            array('id' => $recipient_id),
-            array('%s', '%s'),
-            array('%d')
-        );
-
-        // Update offer clicked count
-        $recipient = $wpdb->get_row($wpdb->prepare(
-            "SELECT offer_id FROM $recipients_table WHERE id = %d",
-            $recipient_id
-        ));
-
-        if ($recipient) {
-            $offers_table = $wpdb->prefix . 'aima_offers';
-            $wpdb->query($wpdb->prepare(
-                "UPDATE $offers_table SET clicked_count = clicked_count + 1 WHERE id = %d",
-                $recipient->offer_id
-            ));
-        }
+        return $content;
     }
 }

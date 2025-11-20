@@ -263,6 +263,81 @@ class AIMA_Activator {
             KEY order_date (order_date)
         ) $charset_collate;";
 
+        // Campaign analytics table - aggregate stats per campaign
+        $table_campaign_analytics = $wpdb->prefix . 'aima_campaign_analytics';
+        $sql_campaign_analytics = "CREATE TABLE IF NOT EXISTS $table_campaign_analytics (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            offer_id bigint(20) UNSIGNED NOT NULL,
+            sent_count int(11) DEFAULT 0,
+            delivered_count int(11) DEFAULT 0,
+            opened_count int(11) DEFAULT 0,
+            unique_opens int(11) DEFAULT 0,
+            clicked_count int(11) DEFAULT 0,
+            unique_clicks int(11) DEFAULT 0,
+            converted_count int(11) DEFAULT 0,
+            total_revenue decimal(10,2) DEFAULT 0.00,
+            open_rate decimal(5,2) DEFAULT 0.00,
+            click_rate decimal(5,2) DEFAULT 0.00,
+            conversion_rate decimal(5,2) DEFAULT 0.00,
+            roi decimal(10,2) DEFAULT 0.00,
+            revenue_per_email decimal(10,2) DEFAULT 0.00,
+            last_updated datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY offer_id (offer_id)
+        ) $charset_collate;";
+
+        // Tracking links table - each link in campaign gets unique tracking code
+        $table_tracking_links = $wpdb->prefix . 'aima_tracking_links';
+        $sql_tracking_links = "CREATE TABLE IF NOT EXISTS $table_tracking_links (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            offer_id bigint(20) UNSIGNED NOT NULL,
+            tracking_code varchar(32) NOT NULL,
+            original_url text NOT NULL,
+            link_text varchar(255) DEFAULT NULL,
+            click_count int(11) DEFAULT 0,
+            unique_clicks int(11) DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY tracking_code (tracking_code),
+            KEY offer_id (offer_id)
+        ) $charset_collate;";
+
+        // Click tracking table - individual click events
+        $table_click_tracking = $wpdb->prefix . 'aima_click_tracking';
+        $sql_click_tracking = "CREATE TABLE IF NOT EXISTS $table_click_tracking (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            tracking_code varchar(32) NOT NULL,
+            customer_id bigint(20) UNSIGNED DEFAULT NULL,
+            email varchar(100) DEFAULT NULL,
+            ip_address varchar(45) DEFAULT NULL,
+            user_agent text DEFAULT NULL,
+            referer text DEFAULT NULL,
+            clicked_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY tracking_code (tracking_code),
+            KEY customer_id (customer_id),
+            KEY clicked_at (clicked_at)
+        ) $charset_collate;";
+
+        // Conversion tracking table - purchases attributed to campaigns
+        $table_conversion_tracking = $wpdb->prefix . 'aima_conversion_tracking';
+        $sql_conversion_tracking = "CREATE TABLE IF NOT EXISTS $table_conversion_tracking (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            offer_id bigint(20) UNSIGNED NOT NULL,
+            customer_id bigint(20) UNSIGNED NOT NULL,
+            order_id bigint(20) UNSIGNED NOT NULL,
+            order_total decimal(10,2) DEFAULT 0.00,
+            commission decimal(10,2) DEFAULT 0.00,
+            attribution_type varchar(20) DEFAULT 'last_click',
+            tracking_code varchar(32) DEFAULT NULL,
+            converted_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY offer_id (offer_id),
+            KEY customer_id (customer_id),
+            KEY order_id (order_id),
+            KEY converted_at (converted_at)
+        ) $charset_collate;";
+
         // Execute table creation
         dbDelta($sql_customers);
         dbDelta($sql_purchases);
@@ -276,6 +351,10 @@ class AIMA_Activator {
         dbDelta($sql_personalized);
         dbDelta($sql_email_queue);
         dbDelta($sql_order_hashes);
+        dbDelta($sql_campaign_analytics);
+        dbDelta($sql_tracking_links);
+        dbDelta($sql_click_tracking);
+        dbDelta($sql_conversion_tracking);
     }
 
     /**
