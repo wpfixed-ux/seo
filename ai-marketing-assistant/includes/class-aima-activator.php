@@ -38,17 +38,22 @@ class AIMA_Activator {
             phone varchar(50) DEFAULT NULL,
             first_name varchar(100) DEFAULT NULL,
             last_name varchar(100) DEFAULT NULL,
+            gender varchar(10) DEFAULT NULL,
+            birthday date DEFAULT NULL,
             total_orders int(11) DEFAULT 0,
             total_spent decimal(10,2) DEFAULT 0.00,
             last_order_date datetime DEFAULT NULL,
             first_order_date datetime DEFAULT NULL,
+            last_campaign_date datetime DEFAULT NULL,
             source varchar(50) DEFAULT 'woocommerce',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY email (email),
             KEY customer_id (customer_id),
-            KEY last_order_date (last_order_date)
+            KEY last_order_date (last_order_date),
+            KEY birthday (birthday),
+            KEY gender (gender)
         ) $charset_collate;";
 
         // Purchase history table
@@ -184,6 +189,80 @@ class AIMA_Activator {
             KEY status (status)
         ) $charset_collate;";
 
+        // Automated triggers table
+        $table_triggers = $wpdb->prefix . 'aima_triggers';
+        $sql_triggers = "CREATE TABLE IF NOT EXISTS $table_triggers (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            trigger_type varchar(50) NOT NULL,
+            conditions text DEFAULT NULL,
+            offer_template text DEFAULT NULL,
+            is_active tinyint(1) DEFAULT 1,
+            last_run datetime DEFAULT NULL,
+            total_sent int(11) DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY trigger_type (trigger_type),
+            KEY is_active (is_active)
+        ) $charset_collate;";
+
+        // Personalized offers table
+        $table_personalized = $wpdb->prefix . 'aima_personalized_offers';
+        $sql_personalized = "CREATE TABLE IF NOT EXISTS $table_personalized (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            offer_id bigint(20) UNSIGNED NOT NULL,
+            customer_id bigint(20) UNSIGNED NOT NULL,
+            headline varchar(255) DEFAULT NULL,
+            subheadline varchar(255) DEFAULT NULL,
+            body text DEFAULT NULL,
+            products text DEFAULT NULL,
+            banner_url varchar(500) DEFAULT NULL,
+            personalization_data text DEFAULT NULL,
+            status varchar(20) DEFAULT 'pending',
+            generated_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY offer_id (offer_id),
+            KEY customer_id (customer_id),
+            KEY status (status)
+        ) $charset_collate;";
+
+        // Email sending queue table
+        $table_email_queue = $wpdb->prefix . 'aima_email_queue';
+        $sql_email_queue = "CREATE TABLE IF NOT EXISTS $table_email_queue (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            offer_id bigint(20) UNSIGNED NOT NULL,
+            customer_id bigint(20) UNSIGNED NOT NULL,
+            email varchar(100) NOT NULL,
+            priority int(11) DEFAULT 5,
+            attempts int(11) DEFAULT 0,
+            max_attempts int(11) DEFAULT 3,
+            status varchar(20) DEFAULT 'queued',
+            scheduled_for datetime NOT NULL,
+            sent_at datetime DEFAULT NULL,
+            error_message text DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY status (status),
+            KEY scheduled_for (scheduled_for),
+            KEY priority (priority)
+        ) $charset_collate;";
+
+        // Order deduplication tracking table
+        $table_order_hashes = $wpdb->prefix . 'aima_order_hashes';
+        $sql_order_hashes = "CREATE TABLE IF NOT EXISTS $table_order_hashes (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            order_hash varchar(64) NOT NULL,
+            customer_email varchar(100) NOT NULL,
+            order_date datetime NOT NULL,
+            source varchar(50) NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY order_hash (order_hash),
+            KEY customer_email (customer_email),
+            KEY order_date (order_date)
+        ) $charset_collate;";
+
         // Execute table creation
         dbDelta($sql_customers);
         dbDelta($sql_purchases);
@@ -193,6 +272,10 @@ class AIMA_Activator {
         dbDelta($sql_recipients);
         dbDelta($sql_telegram);
         dbDelta($sql_imports);
+        dbDelta($sql_triggers);
+        dbDelta($sql_personalized);
+        dbDelta($sql_email_queue);
+        dbDelta($sql_order_hashes);
     }
 
     /**
@@ -210,6 +293,11 @@ class AIMA_Activator {
             'aima_campaign_frequency' => 'monthly',
             'aima_min_purchase_count' => 1,
             'aima_analytics_days' => 90,
+            'aima_emails_per_hour' => 20,
+            'aima_personalize_offers' => 1,
+            'aima_enable_triggers' => 1,
+            'aima_data_retention_days' => 365,
+            'aima_enable_deduplication' => 1,
         );
 
         foreach ($defaults as $key => $value) {
@@ -217,6 +305,78 @@ class AIMA_Activator {
                 add_option($key, $value);
             }
         }
+
+        // Create default triggers
+        self::create_default_triggers();
+    }
+
+    /**
+     * Create default automated triggers
+     */
+    private static function create_default_triggers() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'aima_triggers';
+
+        // Check if triggers already exist
+        $existing = $wpdb->get_var("SELECT COUNT(*) FROM $table");
+        if ($existing > 0) {
+            return;
+        }
+
+        // Birthday trigger
+        $wpdb->insert($table, array(
+            'name' => 'День рождения',
+            'trigger_type' => 'birthday',
+            'conditions' => json_encode(array('days_before' => 0)),
+            'offer_template' => json_encode(array(
+                'discount' => 15,
+                'message_template' => 'С Днем Рождения! Персональная скидка {discount}% на любимые товары!'
+            )),
+            'is_active' => 1
+        ));
+
+        // Inactivity trigger
+        $wpdb->insert($table, array(
+            'name' => 'Неактивность 30 дней',
+            'trigger_type' => 'inactivity',
+            'conditions' => json_encode(array('days_inactive' => 30)),
+            'offer_template' => json_encode(array(
+                'discount' => 10,
+                'message_template' => 'Мы скучали! Специально для вас скидка {discount}%'
+            )),
+            'is_active' => 1
+        ));
+
+        // Women's Day (March 8)
+        $wpdb->insert($table, array(
+            'name' => '8 Марта',
+            'trigger_type' => 'holiday',
+            'conditions' => json_encode(array(
+                'date' => '03-08',
+                'gender' => 'female',
+                'days_before' => 3
+            )),
+            'offer_template' => json_encode(array(
+                'discount' => 20,
+                'message_template' => 'С праздником 8 Марта! Специальное предложение для наших прекрасных клиенток!'
+            )),
+            'is_active' => 1
+        ));
+
+        // New Year
+        $wpdb->insert($table, array(
+            'name' => 'Новый Год',
+            'trigger_type' => 'holiday',
+            'conditions' => json_encode(array(
+                'date' => '12-25',
+                'days_before' => 7
+            )),
+            'offer_template' => json_encode(array(
+                'discount' => 25,
+                'message_template' => 'Новогодняя распродажа! Скидки до {discount}% на весь ассортимент!'
+            )),
+            'is_active' => 1
+        ));
     }
 
     /**
@@ -237,5 +397,29 @@ class AIMA_Activator {
         if (!wp_next_scheduled('aima_update_segments')) {
             wp_schedule_event(time(), 'twicedaily', 'aima_update_segments');
         }
+
+        // Schedule email queue processing (every 3 minutes for throttling)
+        if (!wp_next_scheduled('aima_process_email_queue')) {
+            wp_schedule_event(time(), 'aima_three_minutes', 'aima_process_email_queue');
+        }
+
+        // Schedule trigger check (daily)
+        if (!wp_next_scheduled('aima_check_triggers')) {
+            wp_schedule_event(time(), 'daily', 'aima_check_triggers');
+        }
+
+        // Schedule data cleanup (weekly)
+        if (!wp_next_scheduled('aima_cleanup_old_data')) {
+            wp_schedule_event(time(), 'weekly', 'aima_cleanup_old_data');
+        }
+
+        // Add custom cron schedule for 3 minutes
+        add_filter('cron_schedules', function($schedules) {
+            $schedules['aima_three_minutes'] = array(
+                'interval' => 180,
+                'display' => __('Every 3 Minutes', 'ai-marketing-assistant')
+            );
+            return $schedules;
+        });
     }
 }

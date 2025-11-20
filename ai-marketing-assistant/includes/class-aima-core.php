@@ -48,6 +48,10 @@ class AIMA_Core {
         require_once AIMA_MODULES_DIR . 'class-aima-offer-generator.php';
         require_once AIMA_MODULES_DIR . 'class-aima-email-campaign.php';
         require_once AIMA_MODULES_DIR . 'class-aima-woocommerce-integration.php';
+        require_once AIMA_MODULES_DIR . 'class-aima-trigger-system.php';
+        require_once AIMA_MODULES_DIR . 'class-aima-email-queue.php';
+        require_once AIMA_MODULES_DIR . 'class-aima-deduplication.php';
+        require_once AIMA_MODULES_DIR . 'class-aima-data-cleanup.php';
 
         $this->loader = new AIMA_Loader();
     }
@@ -92,10 +96,19 @@ class AIMA_Core {
         $analyzer = new AIMA_Customer_Analyzer();
         $segmentation = new AIMA_Segmentation_Engine();
         $campaign = new AIMA_Email_Campaign();
+        $triggers = new AIMA_Trigger_System();
+        $email_queue = new AIMA_Email_Queue();
+        $cleanup = new AIMA_Data_Cleanup();
 
+        // Existing hooks
         $this->loader->add_action('aima_daily_analytics_update', $analyzer, 'update_customer_analytics');
         $this->loader->add_action('aima_hourly_campaign_check', $campaign, 'process_scheduled_campaigns');
         $this->loader->add_action('aima_update_segments', $segmentation, 'update_all_segments');
+
+        // New hooks
+        $this->loader->add_action('aima_process_email_queue', $email_queue, 'process_queue');
+        $this->loader->add_action('aima_check_triggers', $triggers, 'check_triggers');
+        $this->loader->add_action('aima_cleanup_old_data', $cleanup, 'run_cleanup');
     }
 
     /**
