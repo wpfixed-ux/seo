@@ -28,6 +28,7 @@ $schedule_status = $scheduler->get_schedule_status();
                 <a href="#tab-strategy" class="nav-tab"><?php _e('Linking Strategy', 'ai-seo-interlinking'); ?></a>
                 <a href="#tab-keywords" class="nav-tab"><?php _e('Keywords', 'ai-seo-interlinking'); ?></a>
                 <a href="#tab-scheduler" class="nav-tab"><?php _e('Scheduler', 'ai-seo-interlinking'); ?></a>
+                <a href="#tab-languages" class="nav-tab"><?php _e('Languages', 'ai-seo-interlinking'); ?></a>
                 <a href="#tab-advanced" class="nav-tab"><?php _e('Advanced', 'ai-seo-interlinking'); ?></a>
             </nav>
 
@@ -270,6 +271,133 @@ $schedule_status = $scheduler->get_schedule_status();
                     </button>
                     <div id="batch-results" style="display:none;"></div>
                 </div>
+            </div>
+
+            <!-- Languages Tab -->
+            <div id="tab-languages" class="ail-tab-content">
+                <h2><?php _e('Language Settings', 'ai-seo-interlinking'); ?></h2>
+
+                <?php
+                $multilang_plugin = AIL_Multilang_Support::detect_plugin();
+                $available_languages = AIL_Multilang_Support::get_available_languages();
+                $active_languages = isset($settings['active_languages']) ? $settings['active_languages'] : [];
+                ?>
+
+                <?php if ($multilang_plugin !== 'none'): ?>
+                <div class="notice notice-info inline">
+                    <p>
+                        <strong><?php _e('Multilingual Plugin Detected:', 'ai-seo-interlinking'); ?></strong>
+                        <?php
+                        if ($multilang_plugin === 'polylang') {
+                            echo 'Polylang';
+                        } elseif ($multilang_plugin === 'wpml') {
+                            echo 'WPML';
+                        }
+                        ?>
+                    </p>
+                    <p><?php _e('Languages are automatically detected from your multilingual plugin.', 'ai-seo-interlinking'); ?></p>
+                </div>
+                <?php else: ?>
+                <p><?php _e('Select which languages you want to process for internal linking.', 'ai-seo-interlinking'); ?></p>
+                <?php endif; ?>
+
+                <table class="form-table">
+                    <?php if ($multilang_plugin === 'none'): ?>
+                    <tr>
+                        <th scope="row">
+                            <?php _e('Active Languages for Processing', 'ai-seo-interlinking'); ?>
+                        </th>
+                        <td>
+                            <fieldset>
+                                <legend class="screen-reader-text">
+                                    <?php _e('Select which languages to process', 'ai-seo-interlinking'); ?>
+                                </legend>
+                                <?php foreach ($available_languages as $code => $name): ?>
+                                <label style="display: block; margin-bottom: 5px;">
+                                    <input type="checkbox"
+                                           name="ail_settings[active_languages][]"
+                                           value="<?php echo esc_attr($code); ?>"
+                                           <?php checked(in_array($code, $active_languages)); ?>>
+                                    <?php echo esc_html($name); ?> (<?php echo esc_html($code); ?>)
+                                </label>
+                                <?php endforeach; ?>
+                            </fieldset>
+                            <p class="description">
+                                <?php _e('Select one or more languages for AI interlinking processing.', 'ai-seo-interlinking'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="default_language"><?php _e('Default Language', 'ai-seo-interlinking'); ?></label>
+                        </th>
+                        <td>
+                            <select id="default_language" name="ail_settings[default_language]">
+                                <?php
+                                $default_lang = isset($settings['default_language']) ? $settings['default_language'] : 'en';
+                                foreach ($available_languages as $code => $name):
+                                ?>
+                                <option value="<?php echo esc_attr($code); ?>" <?php selected($default_lang, $code); ?>>
+                                    <?php echo esc_html($name); ?> (<?php echo esc_html($code); ?>)
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="description">
+                                <?php _e('Default language for posts without language metadata.', 'ai-seo-interlinking'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+
+                    <tr>
+                        <th scope="row"><?php _e('Current Languages Status', 'ai-seo-interlinking'); ?></th>
+                        <td>
+                            <?php
+                            $active_langs = AIL_Multilang_Support::get_languages();
+                            $lang_stats = AIL_Multilang_Support::get_language_statistics();
+                            ?>
+                            <table class="widefat">
+                                <thead>
+                                    <tr>
+                                        <th><?php _e('Language', 'ai-seo-interlinking'); ?></th>
+                                        <th><?php _e('Code', 'ai-seo-interlinking'); ?></th>
+                                        <th><?php _e('Links', 'ai-seo-interlinking'); ?></th>
+                                        <th><?php _e('Keywords', 'ai-seo-interlinking'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($active_langs as $lang_code): ?>
+                                    <tr>
+                                        <td><?php echo esc_html(AIL_Multilang_Support::get_language_name($lang_code)); ?></td>
+                                        <td><code><?php echo esc_html($lang_code); ?></code></td>
+                                        <td><?php echo isset($lang_stats[$lang_code]) ? number_format($lang_stats[$lang_code]['links_count']) : '0'; ?></td>
+                                        <td><?php echo isset($lang_stats[$lang_code]) ? number_format($lang_stats[$lang_code]['keywords_count']) : '0'; ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">
+                            <label for="language_detection"><?php _e('Language Detection', 'ai-seo-interlinking'); ?></label>
+                        </th>
+                        <td>
+                            <select id="language_detection" name="ail_settings[language_detection]">
+                                <option value="auto" <?php selected($settings['language_detection'] ?? 'auto', 'auto'); ?>>
+                                    <?php _e('Automatic (use WordPress locale)', 'ai-seo-interlinking'); ?>
+                                </option>
+                                <option value="manual" <?php selected($settings['language_detection'] ?? '', 'manual'); ?>>
+                                    <?php _e('Manual (select languages above)', 'ai-seo-interlinking'); ?>
+                                </option>
+                            </select>
+                            <p class="description">
+                                <?php _e('How to detect post languages when no multilingual plugin is active.', 'ai-seo-interlinking'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             <!-- Advanced Tab -->

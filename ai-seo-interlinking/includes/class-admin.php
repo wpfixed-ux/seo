@@ -192,6 +192,19 @@ class AIL_Admin {
             $sanitized['log_retention_days'] = absint($input['log_retention_days']);
         }
 
+        // Language Settings
+        if (isset($input['active_languages']) && is_array($input['active_languages'])) {
+            $sanitized['active_languages'] = array_map('sanitize_text_field', $input['active_languages']);
+        }
+
+        if (isset($input['default_language'])) {
+            $sanitized['default_language'] = sanitize_text_field($input['default_language']);
+        }
+
+        if (isset($input['language_detection'])) {
+            $sanitized['language_detection'] = sanitize_text_field($input['language_detection']);
+        }
+
         // Merge with existing settings
         $existing = get_option('ail_settings', []);
         return array_merge($existing, $sanitized);

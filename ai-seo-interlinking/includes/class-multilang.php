@@ -66,8 +66,78 @@ class AIL_Multilang_Support {
                 return self::get_wpml_languages();
 
             default:
-                return ['default'];
+                return self::get_standalone_languages();
         }
+    }
+
+    /**
+     * Get standalone languages (without multilang plugin)
+     *
+     * @return array Language codes
+     */
+    private static function get_standalone_languages() {
+        $settings = get_option('ail_settings', []);
+
+        if (isset($settings['active_languages']) && !empty($settings['active_languages'])) {
+            return $settings['active_languages'];
+        }
+
+        // Default: use WordPress locale
+        $locale = get_locale();
+        return [self::locale_to_language_code($locale)];
+    }
+
+    /**
+     * Get all available languages
+     *
+     * @return array Available languages
+     */
+    public static function get_available_languages() {
+        return [
+            'en' => 'English',
+            'ru' => 'Русский',
+            'de' => 'Deutsch',
+            'fr' => 'Français',
+            'es' => 'Español',
+            'it' => 'Italiano',
+            'pt' => 'Português',
+            'pl' => 'Polski',
+            'nl' => 'Nederlands',
+            'tr' => 'Türkçe',
+            'ja' => '日本語',
+            'zh' => '中文',
+            'ko' => '한국어',
+            'ar' => 'العربية',
+        ];
+    }
+
+    /**
+     * Convert locale to language code
+     *
+     * @param string $locale WordPress locale
+     * @return string        Language code
+     */
+    private static function locale_to_language_code($locale) {
+        $map = [
+            'en_US' => 'en',
+            'en_GB' => 'en',
+            'ru_RU' => 'ru',
+            'de_DE' => 'de',
+            'fr_FR' => 'fr',
+            'es_ES' => 'es',
+            'it_IT' => 'it',
+            'pt_BR' => 'pt',
+            'pt_PT' => 'pt',
+            'pl_PL' => 'pl',
+            'nl_NL' => 'nl',
+            'tr_TR' => 'tr',
+            'ja' => 'ja',
+            'zh_CN' => 'zh',
+            'ko_KR' => 'ko',
+            'ar' => 'ar',
+        ];
+
+        return isset($map[$locale]) ? $map[$locale] : 'en';
     }
 
     /**
@@ -311,6 +381,12 @@ class AIL_Multilang_Support {
                     }
                 }
                 break;
+        }
+
+        // Fallback to available languages
+        $available = self::get_available_languages();
+        if (isset($available[$language_code])) {
+            return $available[$language_code];
         }
 
         return $language_code;

@@ -1,0 +1,375 @@
+# Copyright (C) 2024 AI SEO Interlinking
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: AI SEO Interlinking 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/your-repo/ai-seo-interlinking\n"
+"POT-Creation-Date: 2024-11-20 12:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: AI SEO Interlinking\n"
+
+#: ai-seo-interlinking.php
+msgid "AI SEO Interlinking"
+msgstr ""
+
+msgid "AI SEO Interlinking requires WooCommerce to be installed and active."
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "AI Interlinking"
+msgstr ""
+
+msgid "Reports"
+msgstr ""
+
+msgid "Logs"
+msgstr ""
+
+msgid "Testing connection..."
+msgstr ""
+
+msgid "Success!"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Processing..."
+msgstr ""
+
+msgid "Are you sure?"
+msgstr ""
+
+msgid "Permission denied"
+msgstr ""
+
+msgid "API key is required"
+msgstr ""
+
+msgid "Invalid post ID"
+msgstr ""
+
+msgid "Post not found"
+msgstr ""
+
+msgid "Settings saved"
+msgstr ""
+
+#: admin/views/settings-page.php
+msgid "AI SEO Interlinking Settings"
+msgstr ""
+
+msgid "API Settings"
+msgstr ""
+
+msgid "Linking Strategy"
+msgstr ""
+
+msgid "Keywords"
+msgstr ""
+
+msgid "Scheduler"
+msgstr ""
+
+msgid "Advanced"
+msgstr ""
+
+msgid "Languages"
+msgstr ""
+
+msgid "OpenAI API Configuration"
+msgstr ""
+
+msgid "API Key"
+msgstr ""
+
+msgid "Enter your OpenAI API key. Get one at"
+msgstr ""
+
+msgid "Test Connection"
+msgstr ""
+
+msgid "Model"
+msgstr ""
+
+msgid "Max Tokens"
+msgstr ""
+
+msgid "Maximum tokens per API request"
+msgstr ""
+
+msgid "Internal Linking Strategy"
+msgstr ""
+
+msgid "Strategy"
+msgstr ""
+
+msgid "Pyramid (Homepage → Categories → Products)"
+msgstr ""
+
+msgid "Circular (Same Level Pages)"
+msgstr ""
+
+msgid "Thematic Clusters (Semantic Relevance)"
+msgstr ""
+
+msgid "Hub (Pillar + Supporting)"
+msgstr ""
+
+msgid "AI Automatic"
+msgstr ""
+
+msgid "Max Outbound Links"
+msgstr ""
+
+msgid "Max Inbound Links"
+msgstr ""
+
+msgid "Min Content Length (words)"
+msgstr ""
+
+msgid "Keyword Management"
+msgstr ""
+
+msgid "AI Prompt Template"
+msgstr ""
+
+msgid "Available variables: {post_title}, {post_content}, {category}, {language}"
+msgstr ""
+
+msgid "Generate Keywords for All Posts"
+msgstr ""
+
+msgid "Batch Processing Scheduler"
+msgstr ""
+
+msgid "Enable Scheduler"
+msgstr ""
+
+msgid "Run automated batch processing"
+msgstr ""
+
+msgid "Frequency"
+msgstr ""
+
+msgid "Daily"
+msgstr ""
+
+msgid "Weekly"
+msgstr ""
+
+msgid "Monthly"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Batch Size"
+msgstr ""
+
+msgid "Number of posts to process per batch"
+msgstr ""
+
+msgid "Next Scheduled Run"
+msgstr ""
+
+msgid "Not scheduled"
+msgstr ""
+
+msgid "Manual Processing"
+msgstr ""
+
+msgid "Process Batch Now"
+msgstr ""
+
+msgid "Advanced Settings"
+msgstr ""
+
+msgid "Enable Logging"
+msgstr ""
+
+msgid "Log all operations and API requests"
+msgstr ""
+
+msgid "Log Retention (days)"
+msgstr ""
+
+msgid "Auto Process on Save"
+msgstr ""
+
+msgid "Automatically process posts when saved"
+msgstr ""
+
+msgid "Active Languages for Processing"
+msgstr ""
+
+msgid "Select which languages to process"
+msgstr ""
+
+msgid "Default Language"
+msgstr ""
+
+#: admin/views/reports-page.php
+msgid "AI SEO Interlinking Reports"
+msgstr ""
+
+msgid "Total Links Created"
+msgstr ""
+
+msgid "Last 30 days"
+msgstr ""
+
+msgid "API Calls"
+msgstr ""
+
+msgid "Tokens Used"
+msgstr ""
+
+msgid "Estimated Cost"
+msgstr ""
+
+msgid "Statistics by Language"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "Links"
+msgstr ""
+
+msgid "Operations Summary"
+msgstr ""
+
+msgid "Operation Type"
+msgstr ""
+
+msgid "Count"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
+
+msgid "Cost"
+msgstr ""
+
+msgid "Errors"
+msgstr ""
+
+msgid "Top Pages by Inbound Links"
+msgstr ""
+
+msgid "Page"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Inbound Links"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Top Pages by Outbound Links"
+msgstr ""
+
+msgid "Outbound Links"
+msgstr ""
+
+msgid "Orphan Pages (No Inbound Links)"
+msgstr ""
+
+msgid "Found %d pages without inbound links"
+msgstr ""
+
+msgid "Refresh Statistics"
+msgstr ""
+
+#: admin/views/logs-page.php
+msgid "AI SEO Interlinking Logs"
+msgstr ""
+
+msgid "All Operations"
+msgstr ""
+
+msgid "API Requests"
+msgstr ""
+
+msgid "Build Links"
+msgstr ""
+
+msgid "Batch Processing"
+msgstr ""
+
+msgid "All Statuses"
+msgstr ""
+
+msgid "Success"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "ID"
+msgstr ""
+
+msgid "Operation"
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "No logs found"
+msgstr ""
+
+msgid "View Details"
+msgstr ""
+
+msgid "Clear All Logs"
+msgstr ""
+
+msgid "Warning: This action cannot be undone!"
+msgstr ""
+
+msgid "Are you sure you want to clear all logs? This cannot be undone!"
+msgstr ""
+
+#: includes/class-link-builder.php
+msgid "Post not found or not published"
+msgstr ""
+
+msgid "Post is excluded from interlinking"
+msgstr ""
+
+msgid "Content is too short for interlinking"
+msgstr ""
+
+msgid "No suitable target posts found"
+msgstr ""
+
+#: includes/class-ai-processor.php
+msgid "API key is not set"
+msgstr ""
+
+msgid "Connection successful!"
+msgstr ""
+
+msgid "API key is not configured"
+msgstr ""
