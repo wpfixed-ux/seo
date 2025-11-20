@@ -1,0 +1,375 @@
+/**
+ * AI SEO Interlinking Admin Styles
+ *
+ * @package AI_SEO_Interlinking
+ */
+
+/* Settings Page */
+.ail-settings-page {
+    max-width: 1200px;
+}
+
+/* Tabs */
+.ail-tabs {
+    margin-top: 20px;
+}
+
+.ail-tab-content {
+    display: none;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+}
+
+.ail-tab-content.active {
+    display: block;
+}
+
+.ail-tab-content h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Statistics Cards */
+.ail-stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.ail-stat-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ail-stat-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ail-stat-value {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2271b1;
+    margin: 10px 0;
+}
+
+.ail-stat-label {
+    margin: 0;
+    color: #999;
+    font-size: 12px;
+}
+
+/* Sections */
+.ail-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.ail-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Keywords Section */
+.ail-keywords-section {
+    margin-bottom: 20px;
+}
+
+.ail-keywords-actions {
+    margin: 20px 0;
+}
+
+#keywords-progress {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+#keywords-progress-bar {
+    width: 100%;
+    height: 30px;
+}
+
+#keywords-progress-text {
+    display: inline-block;
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+/* Manual Processing */
+.ail-manual-processing {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+#batch-results {
+    margin-top: 15px;
+}
+
+/* Connection Status */
+#connection-status {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.ail-notice {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.ail-notice .dashicons {
+    margin-right: 5px;
+}
+
+.ail-notice-success {
+    color: #00a32a;
+    background: #e6f4ea;
+}
+
+.ail-notice-error {
+    color: #d63638;
+    background: #fce8e8;
+}
+
+/* Status Badges */
+.ail-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.ail-status-success {
+    background: #e6f4ea;
+    color: #00a32a;
+}
+
+.ail-status-error {
+    background: #fce8e8;
+    color: #d63638;
+}
+
+.ail-status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Logs Page */
+.ail-logs-page .wp-list-table {
+    margin-top: 20px;
+}
+
+.ail-logs-filters {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+.ail-logs-filters form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.ail-logs-filters select {
+    min-width: 200px;
+}
+
+.ail-logs-actions {
+    margin: 20px 0;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.ail-logs-actions .description {
+    margin-left: 10px;
+    color: #d63638;
+}
+
+/* Details */
+details {
+    cursor: pointer;
+}
+
+details summary {
+    color: #2271b1;
+    text-decoration: underline;
+}
+
+details pre {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    font-size: 11px;
+    overflow-x: auto;
+    max-height: 300px;
+}
+
+/* Reports Page */
+.ail-reports-page .ail-section table {
+    margin-top: 15px;
+}
+
+.ail-reports-page .wp-list-table th,
+.ail-reports-page .wp-list-table td {
+    padding: 12px;
+}
+
+.ail-actions {
+    margin: 20px 0;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .ail-stats-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .ail-logs-filters form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ail-logs-filters select {
+        width: 100%;
+    }
+}
+
+/* Loading Spinner */
+.ail-loading {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.ail-loading .spinner {
+    float: none;
+    margin: 0;
+}
+
+/* Tooltips */
+.ail-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.ail-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: #000;
+    color: #fff;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* Form Table Enhancements */
+.form-table th {
+    padding: 20px 10px 20px 0;
+}
+
+.form-table td {
+    padding: 15px 10px;
+}
+
+.form-table input[type="text"],
+.form-table input[type="password"],
+.form-table input[type="number"],
+.form-table select,
+.form-table textarea {
+    width: 100%;
+    max-width: 500px;
+}
+
+.form-table .description {
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+/* Success Messages */
+.notice.inline {
+    margin: 5px 0 15px;
+    padding: 10px;
+}
+
+/* Button Spacing */
+.button + .button {
+    margin-left: 10px;
+}
+
+/* Plugin Icon */
+.dashicons-admin-links::before {
+    content: "\f103";
+}
+
+/* Empty State */
+.ail-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.ail-empty-state .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #ccc;
+}
+
+/* Charts (if needed in future) */
+.ail-chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+/* Progress Bars */
+.ail-progress {
+    width: 100%;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.ail-progress-bar {
+    height: 100%;
+    background: #2271b1;
+    transition: width 0.3s ease;
+}
+
+/* Highlight */
+.ail-highlight {
+    background: #fff3cd;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
