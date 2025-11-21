@@ -114,7 +114,7 @@ class AIL_Activator {
         $default_settings = [
             // API Settings
             'openai_api_key' => '',
-            'openai_model' => 'gpt-3.5-turbo',
+            'openai_model' => 'gpt-4o-mini',
             'max_tokens' => 500,
             'api_timeout' => 30,
 

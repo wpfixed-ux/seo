@@ -137,8 +137,12 @@ class AIL_Admin {
         $sanitized = [];
 
         // API Settings
-        if (isset($input['openai_api_key'])) {
-            $sanitized['openai_api_key'] = AIL_AI_Processor::encrypt_api_key(sanitize_text_field($input['openai_api_key']));
+        if (isset($input['openai_api_key']) && !empty($input['openai_api_key'])) {
+            $api_key = sanitize_text_field($input['openai_api_key']);
+            // Only encrypt if it's not already encrypted and not empty
+            if (!empty($api_key)) {
+                $sanitized['openai_api_key'] = AIL_AI_Processor::encrypt_api_key($api_key);
+            }
         }
 
         if (isset($input['openai_model'])) {
@@ -147,6 +151,11 @@ class AIL_Admin {
 
         if (isset($input['max_tokens'])) {
             $sanitized['max_tokens'] = absint($input['max_tokens']);
+        }
+
+        // AI Prompt Template
+        if (isset($input['ai_prompt_template'])) {
+            $sanitized['ai_prompt_template'] = wp_kses_post($input['ai_prompt_template']);
         }
 
         // Linking Settings

@@ -54,7 +54,7 @@ class AIL_AI_Processor {
         $settings = get_option('ail_settings', []);
 
         $this->api_key = isset($settings['openai_api_key']) ? $this->decrypt_api_key($settings['openai_api_key']) : '';
-        $this->model = isset($settings['openai_model']) ? $settings['openai_model'] : 'gpt-3.5-turbo';
+        $this->model = isset($settings['openai_model']) ? $settings['openai_model'] : 'gpt-4o-mini';
         $this->max_tokens = isset($settings['max_tokens']) ? intval($settings['max_tokens']) : 500;
         $this->timeout = isset($settings['api_timeout']) ? intval($settings['api_timeout']) : 30;
     }
@@ -313,14 +313,18 @@ class AIL_AI_Processor {
      * @return float         Cost in USD
      */
     private function calculate_cost($tokens, $model) {
-        // Pricing as of 2024 (USD per 1K tokens)
+        // Pricing as of November 2024 (USD per 1M tokens - average of input/output)
+        // Source: https://openai.com/api/pricing/
         $pricing = [
+            'gpt-4o-mini' => 0.000375,  // $0.15 input / $0.60 output per 1M tokens
+            'gpt-4o' => 0.00625,        // $2.50 input / $10.00 output per 1M tokens
+            'gpt-4' => 0.045,           // $30 input / $60 output per 1M tokens (legacy)
+            // Legacy models (deprecated)
             'gpt-3.5-turbo' => 0.0015,
-            'gpt-4' => 0.03,
             'gpt-4-turbo' => 0.01,
         ];
 
-        $rate = isset($pricing[$model]) ? $pricing[$model] : 0.0015;
+        $rate = isset($pricing[$model]) ? $pricing[$model] : 0.000375; // Default to gpt-4o-mini
 
         return ($tokens / 1000) * $rate;
     }

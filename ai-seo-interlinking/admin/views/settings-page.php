@@ -64,16 +64,20 @@ $schedule_status = $scheduler->get_schedule_status();
                         </th>
                         <td>
                             <select id="openai_model" name="ail_settings[openai_model]">
-                                <option value="gpt-3.5-turbo" <?php selected($settings['openai_model'] ?? 'gpt-3.5-turbo', 'gpt-3.5-turbo'); ?>>
-                                    GPT-3.5 Turbo (Fast, Cheap)
+                                <option value="gpt-4o-mini" <?php selected($settings['openai_model'] ?? 'gpt-4o-mini', 'gpt-4o-mini'); ?>>
+                                    GPT-4o Mini (Recommended, Fast & Cheap)
+                                </option>
+                                <option value="gpt-4o" <?php selected($settings['openai_model'] ?? '', 'gpt-4o'); ?>>
+                                    GPT-4o (Best Quality, Higher Cost)
                                 </option>
                                 <option value="gpt-4" <?php selected($settings['openai_model'] ?? '', 'gpt-4'); ?>>
-                                    GPT-4 (Better Quality, Expensive)
-                                </option>
-                                <option value="gpt-4-turbo" <?php selected($settings['openai_model'] ?? '', 'gpt-4-turbo'); ?>>
-                                    GPT-4 Turbo (Balanced)
+                                    GPT-4 (Legacy, Expensive)
                                 </option>
                             </select>
+                            <p class="description">
+                                <?php _e('GPT-4o Mini: ~$0.15/$0.60 per 1M tokens (input/output)', 'ai-seo-interlinking'); ?><br>
+                                <?php _e('GPT-4o: ~$2.50/$10 per 1M tokens (input/output)', 'ai-seo-interlinking'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>
