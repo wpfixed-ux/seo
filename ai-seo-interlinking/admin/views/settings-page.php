@@ -42,16 +42,27 @@ $schedule_status = $scheduler->get_schedule_status();
                             <label for="openai_api_key"><?php _e('API Key', 'ai-seo-interlinking'); ?></label>
                         </th>
                         <td>
-                            <input type="password"
+                            <?php
+                            $has_api_key = !empty($settings['openai_api_key']);
+                            ?>
+                            <input type="text"
                                    id="openai_api_key"
                                    name="ail_settings[openai_api_key]"
                                    value=""
-                                   placeholder="sk-..."
-                                   class="regular-text">
+                                   placeholder="<?php echo $has_api_key ? 'sk-••••••••••••••••' : 'sk-...'; ?>"
+                                   class="regular-text"
+                                   autocomplete="off">
+                            <?php if ($has_api_key): ?>
+                            <p class="description" style="color: #00a32a;">
+                                <span class="dashicons dashicons-yes-alt"></span>
+                                <?php _e('API Key is set. Leave blank to keep current key, or enter new key to update.', 'ai-seo-interlinking'); ?>
+                            </p>
+                            <?php else: ?>
                             <p class="description">
                                 <?php _e('Enter your OpenAI API key. Get one at', 'ai-seo-interlinking'); ?>
                                 <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>
                             </p>
+                            <?php endif; ?>
                             <button type="button" id="test-connection" class="button">
                                 <?php _e('Test Connection', 'ai-seo-interlinking'); ?>
                             </button>
