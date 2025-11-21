@@ -631,4 +631,235 @@ class WPOM_Cleaner {
             'updated' => $updated_count,
         );
     }
+
+    /**
+     * Получение списка известных плагинов с их паттернами
+     */
+    public static function get_known_plugins() {
+        return array(
+            'elementor' => array(
+                'name' => 'Elementor',
+                'patterns' => array('elementor%', '_elementor%'),
+                'file' => 'elementor/elementor.php',
+            ),
+            'rank-math' => array(
+                'name' => 'Rank Math SEO',
+                'patterns' => array('rank_math%', 'rank-math%'),
+                'file' => 'seo-by-rank-math/rank-math.php',
+            ),
+            'yoast' => array(
+                'name' => 'Yoast SEO',
+                'patterns' => array('wpseo%', '_yoast%'),
+                'file' => 'wordpress-seo/wp-seo.php',
+            ),
+            'wpml' => array(
+                'name' => 'WPML',
+                'patterns' => array('wpml%', '_wpml%', 'icl%'),
+                'file' => 'sitepress-multilingual-cms/sitepress.php',
+            ),
+            'litespeed' => array(
+                'name' => 'LiteSpeed Cache',
+                'patterns' => array('litespeed%'),
+                'file' => 'litespeed-cache/litespeed-cache.php',
+            ),
+            'wpallimport' => array(
+                'name' => 'WP All Import',
+                'patterns' => array('wpallimport%', 'wp_all_import%'),
+                'file' => 'wp-all-import-pro/wp-all-import-pro.php',
+            ),
+            'wordfence' => array(
+                'name' => 'Wordfence',
+                'patterns' => array('wordfence%', 'wf%'),
+                'file' => 'wordfence/wordfence.php',
+            ),
+            'jetpack' => array(
+                'name' => 'Jetpack',
+                'patterns' => array('jetpack%'),
+                'file' => 'jetpack/jetpack.php',
+            ),
+        );
+    }
+
+    /**
+     * Проверка активности плагина
+     */
+    public function is_plugin_active($plugin_file) {
+        if (!function_exists('is_plugin_active')) {
+            include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        }
+
+        return is_plugin_active($plugin_file);
+    }
+
+    /**
+     * Анализ опций конкретного плагина
+     */
+    public function analyze_plugin_options($plugin_slug) {
+        $known_plugins = self::get_known_plugins();
+
+        if (!isset($known_plugins[$plugin_slug])) {
+            return array(
+                'success' => false,
+                'error' => 'Unknown plugin',
+            );
+        }
+
+        $plugin_info = $known_plugins[$plugin_slug];
+        $is_active = $this->is_plugin_active($plugin_info['file']);
+
+        global $wpdb;
+        $options_table = $wpdb->options;
+
+        $all_options = array();
+        $total_count = 0;
+        $total_size = 0;
+
+        foreach ($plugin_info['patterns'] as $pattern) {
+            $options = $wpdb->get_results($wpdb->prepare(
+                "SELECT option_name, ROUND(LENGTH(option_value) / 1024, 2) as size_kb, autoload
+                FROM $options_table
+                WHERE option_name LIKE %s
+                LIMIT 50",
+                $pattern
+            ));
+
+            $all_options = array_merge($all_options, $options);
+
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*)
+                FROM $options_table
+                WHERE option_name LIKE %s",
+                $pattern
+            ));
+
+            $size = $wpdb->get_var($wpdb->prepare(
+                "SELECT SUM(LENGTH(option_value))
+                FROM $options_table
+                WHERE option_name LIKE %s",
+                $pattern
+            ));
+
+            $total_count += intval($count);
+            $total_size += intval($size);
+        }
+
+        return array(
+            'success' => true,
+            'plugin_name' => $plugin_info['name'],
+            'is_active' => $is_active,
+            'can_clean' => !$is_active,
+            'total_count' => $total_count,
+            'total_size_kb' => round($total_size / 1024, 2),
+            'total_size_mb' => round($total_size / 1024 / 1024, 2),
+            'options' => $all_options,
+            'warning' => $is_active ? 'Plugin is active! Deactivate it before cleaning.' : '',
+        );
+    }
+
+    /**
+     * Очистка опций неактивного плагина
+     */
+    public function clean_plugin_options($plugin_slug, $create_backup = true) {
+        $known_plugins = self::get_known_plugins();
+
+        if (!isset($known_plugins[$plugin_slug])) {
+            return array(
+                'success' => false,
+                'error' => 'Unknown plugin',
+            );
+        }
+
+        $plugin_info = $known_plugins[$plugin_slug];
+
+        // Проверяем, что плагин неактивен
+        if ($this->is_plugin_active($plugin_info['file'])) {
+            return array(
+                'success' => false,
+                'error' => 'Cannot delete options of active plugin! Please deactivate it first.',
+            );
+        }
+
+        global $wpdb;
+        $options_table = $wpdb->options;
+
+        $wpdb->query('START TRANSACTION');
+
+        try {
+            $total_deleted = 0;
+            $total_size_freed = 0;
+
+            $log_id = WPOM_Database::log_operation(
+                'clean_plugin_options',
+                array('plugin' => $plugin_info['name'], 'patterns' => $plugin_info['patterns']),
+                0,
+                0,
+                'in_progress'
+            );
+
+            foreach ($plugin_info['patterns'] as $pattern) {
+                $options = $wpdb->get_results($wpdb->prepare(
+                    "SELECT option_id, option_name, option_value, autoload
+                    FROM $options_table
+                    WHERE option_name LIKE %s",
+                    $pattern
+                ));
+
+                // Фильтруем защищенные опции
+                $options = array_filter($options, function($option) {
+                    return !in_array($option->option_name, $this->protected_options);
+                });
+
+                foreach ($options as $option) {
+                    $total_size_freed += strlen($option->option_value);
+
+                    if ($create_backup) {
+                        WPOM_Database::backup_option(
+                            $option->option_id,
+                            $option->option_name,
+                            $option->option_value,
+                            $option->autoload,
+                            $log_id
+                        );
+                    }
+
+                    $wpdb->delete($options_table, array('option_id' => $option->option_id), array('%d'));
+                    $total_deleted++;
+                }
+            }
+
+            $wpdb->update(
+                $wpdb->prefix . 'wpo_logs',
+                array(
+                    'items_affected' => $total_deleted,
+                    'size_freed' => $total_size_freed,
+                    'status' => 'completed'
+                ),
+                array('id' => $log_id),
+                array('%d', '%d', '%s'),
+                array('%d')
+            );
+
+            $wpdb->query("OPTIMIZE TABLE $options_table");
+            $wpdb->query('COMMIT');
+
+            WPOM_Database::record_current_state();
+
+            return array(
+                'success' => true,
+                'deleted' => $total_deleted,
+                'size_freed' => $total_size_freed,
+                'size_freed_kb' => round($total_size_freed / 1024, 2),
+                'log_id' => $log_id,
+                'plugin_name' => $plugin_info['name'],
+            );
+
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+
+            return array(
+                'success' => false,
+                'error' => $e->getMessage(),
+            );
+        }
+    }
 }

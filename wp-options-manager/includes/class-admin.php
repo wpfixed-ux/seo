@@ -42,6 +42,8 @@ class WPOM_Admin {
         add_action('wp_ajax_wpom_clean_by_pattern', array($this, 'ajax_clean_by_pattern'));
         add_action('wp_ajax_wpom_preview_pattern', array($this, 'ajax_preview_pattern'));
         add_action('wp_ajax_wpom_disable_autoload', array($this, 'ajax_disable_autoload'));
+        add_action('wp_ajax_wpom_analyze_plugin', array($this, 'ajax_analyze_plugin'));
+        add_action('wp_ajax_wpom_clean_plugin', array($this, 'ajax_clean_plugin'));
     }
 
     /**
@@ -292,6 +294,58 @@ class WPOM_Admin {
 
         $cleaner = WPOM_Cleaner::get_instance();
         $result = $cleaner->disable_autoload_for_large_options($threshold);
+
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
+    /**
+     * AJAX: Анализ опций плагина
+     */
+    public function ajax_analyze_plugin() {
+        check_ajax_referer('wpom_ajax_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+        }
+
+        $plugin_slug = isset($_POST['plugin_slug']) ? sanitize_text_field($_POST['plugin_slug']) : '';
+
+        if (empty($plugin_slug)) {
+            wp_send_json_error(array('message' => 'Plugin slug is required'));
+        }
+
+        $cleaner = WPOM_Cleaner::get_instance();
+        $result = $cleaner->analyze_plugin_options($plugin_slug);
+
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
+    /**
+     * AJAX: Очистка опций плагина
+     */
+    public function ajax_clean_plugin() {
+        check_ajax_referer('wpom_ajax_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+        }
+
+        $plugin_slug = isset($_POST['plugin_slug']) ? sanitize_text_field($_POST['plugin_slug']) : '';
+
+        if (empty($plugin_slug)) {
+            wp_send_json_error(array('message' => 'Plugin slug is required'));
+        }
+
+        $cleaner = WPOM_Cleaner::get_instance();
+        $result = $cleaner->clean_plugin_options($plugin_slug, true);
 
         if ($result['success']) {
             wp_send_json_success($result);

@@ -154,6 +154,38 @@ $wc_sessions = $diagnostic->analyze_woocommerce_sessions();
                 </button>
             </div>
         </div>
+
+        <!-- Очистка опций неактивных плагинов -->
+        <div class="wpom-card wpom-plugin-cleaner">
+            <h2><?php _e('Inactive Plugins Cleanup', 'wp-options-manager'); ?></h2>
+            <p class="description"><?php _e('Clean database options left by inactive plugins. The plugin must be deactivated before cleaning.', 'wp-options-manager'); ?></p>
+
+            <?php
+            $known_plugins = WPOM_Cleaner::get_known_plugins();
+            foreach ($known_plugins as $slug => $plugin_info):
+            ?>
+                <div class="wpom-plugin-item" data-plugin-slug="<?php echo esc_attr($slug); ?>">
+                    <div class="wpom-plugin-header">
+                        <h3><?php echo esc_html($plugin_info['name']); ?></h3>
+                        <div class="wpom-plugin-actions">
+                            <button class="button button-secondary wpom-btn-analyze-plugin" data-plugin-slug="<?php echo esc_attr($slug); ?>">
+                                <span class="dashicons dashicons-search"></span>
+                                <?php _e('Analyze', 'wp-options-manager'); ?>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="wpom-plugin-info" id="wpom-plugin-info-<?php echo esc_attr($slug); ?>" style="display: none;">
+                        <!-- Информация будет загружена через AJAX -->
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
+            <div class="wpom-alert wpom-alert-warning">
+                <strong><?php _e('Warning:', 'wp-options-manager'); ?></strong>
+                <?php _e('Only clean options for plugins you have completely removed or will never use again. A backup will be created automatically.', 'wp-options-manager'); ?>
+            </div>
+        </div>
     </div>
 
     <!-- Результаты операции -->

@@ -21,6 +21,10 @@
             $('.wpom-btn-preview-pattern').on('click', this.previewPattern);
             $('.wpom-btn-clean-pattern').on('click', this.cleanByPattern);
 
+            // Plugin cleaner actions
+            $('.wpom-btn-analyze-plugin').on('click', this.analyzePlugin);
+            $(document).on('click', '.wpom-btn-clean-plugin', this.cleanPlugin);
+
             // Diagnostic page actions
             $('.wpom-btn-refresh-diagnostic').on('click', this.refreshDiagnostic);
 
@@ -361,6 +365,149 @@
                 },
                 error: function() {
                     WPOM.hideLoader();
+                    WPOM.showResult('<strong>Error:</strong> Ajax request failed.', 'error');
+                }
+            });
+        },
+
+        analyzePlugin: function(e) {
+            e.preventDefault();
+
+            const $button = $(this);
+            const $pluginItem = $button.closest('.wpom-plugin-item');
+            const pluginSlug = $pluginItem.data('plugin-slug');
+            const $infoContainer = $pluginItem.find('.wpom-plugin-info');
+
+            // Show loading state
+            $button.prop('disabled', true).text('Analyzing...');
+
+            $.ajax({
+                url: wpomAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'wpom_analyze_plugin',
+                    nonce: wpomAjax.nonce,
+                    plugin_slug: pluginSlug
+                },
+                success: function(response) {
+                    $button.prop('disabled', false).text('Analyze');
+
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Build info HTML
+                        let html = '<div class="wpom-plugin-status ' + (data.is_active ? 'active' : 'inactive') + '">';
+                        html += '<strong>Status:</strong> ' + (data.is_active ? 'Active (Cannot clean)' : 'Inactive (Safe to clean)');
+                        html += '</div>';
+
+                        html += '<div class="wpom-plugin-stats">';
+                        html += '<div class="wpom-plugin-stat">';
+                        html += '<div class="wpom-plugin-stat-label">Options Found</div>';
+                        html += '<div class="wpom-plugin-stat-value">' + data.count + '</div>';
+                        html += '</div>';
+
+                        html += '<div class="wpom-plugin-stat">';
+                        html += '<div class="wpom-plugin-stat-label">Total Size</div>';
+                        html += '<div class="wpom-plugin-stat-value' + (data.size_kb > 100 ? ' large' : '') + '">' + data.size_kb + ' KB</div>';
+                        html += '</div>';
+
+                        html += '<div class="wpom-plugin-stat">';
+                        html += '<div class="wpom-plugin-stat-label">Autoload Size</div>';
+                        html += '<div class="wpom-plugin-stat-value">' + data.autoload_size_kb + ' KB</div>';
+                        html += '</div>';
+                        html += '</div>';
+
+                        // Show options list if exists
+                        if (data.options && data.options.length > 0) {
+                            html += '<div class="wpom-plugin-options-list">';
+                            html += '<h4>Options List:</h4>';
+                            html += '<table><thead><tr>';
+                            html += '<th>Option Name</th><th>Size (KB)</th><th>Autoload</th>';
+                            html += '</tr></thead><tbody>';
+
+                            data.options.forEach(function(option) {
+                                html += '<tr>';
+                                html += '<td>' + option.option_name + '</td>';
+                                html += '<td>' + option.size_kb + '</td>';
+                                html += '<td>' + option.autoload + '</td>';
+                                html += '</tr>';
+                            });
+
+                            html += '</tbody></table>';
+
+                            if (data.count > 20) {
+                                html += '<p class="description">Showing first 20 options. Total: ' + data.count + '</p>';
+                            }
+
+                            html += '</div>';
+                        }
+
+                        // Add clean button if plugin is inactive and has options
+                        if (!data.is_active && data.count > 0) {
+                            html += '<div class="wpom-plugin-clean-action">';
+                            html += '<button type="button" class="button button-primary wpom-btn-clean-plugin" data-plugin-slug="' + pluginSlug + '" data-plugin-name="' + data.plugin_name + '">';
+                            html += '<span class="dashicons dashicons-trash"></span> Clean All ' + data.plugin_name + ' Options';
+                            html += '</button>';
+                            html += '<p class="description">This will delete all ' + data.count + ' options and free ' + data.size_kb + ' KB. A backup will be created automatically.</p>';
+                            html += '</div>';
+                        }
+
+                        $infoContainer.html(html).slideDown(300);
+                    } else {
+                        WPOM.showResult('<strong>Error:</strong> ' + response.data.message, 'error');
+                    }
+                },
+                error: function() {
+                    $button.prop('disabled', false).text('Analyze');
+                    WPOM.showResult('<strong>Error:</strong> Ajax request failed.', 'error');
+                }
+            });
+        },
+
+        cleanPlugin: function(e) {
+            e.preventDefault();
+
+            const $button = $(this);
+            const pluginSlug = $button.data('plugin-slug');
+            const pluginName = $button.data('plugin-name');
+
+            if (!confirm('Are you sure you want to delete all options for ' + pluginName + '?\n\nThis action will:\n- Delete all plugin options from wp_options table\n- Create an automatic backup\n- Free up database space\n\nYou can restore from backup if needed.')) {
+                return;
+            }
+
+            // Show loading state
+            $button.prop('disabled', true).text('Cleaning...');
+            WPOM.showLoader();
+
+            $.ajax({
+                url: wpomAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'wpom_clean_plugin',
+                    nonce: wpomAjax.nonce,
+                    plugin_slug: pluginSlug
+                },
+                success: function(response) {
+                    WPOM.hideLoader();
+                    $button.prop('disabled', false).text('Clean Options');
+
+                    if (response.success) {
+                        const message = '<strong>Success!</strong> Deleted ' + response.data.deleted + ' options for ' + pluginName + '. ' +
+                                      'Freed ' + response.data.size_freed_kb + ' KB. ' +
+                                      'Backup ID: #' + response.data.backup_id;
+                        WPOM.showResult(message, 'success');
+
+                        // Reload page after 3 seconds
+                        setTimeout(function() {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        WPOM.showResult('<strong>Error:</strong> ' + response.data.message, 'error');
+                    }
+                },
+                error: function() {
+                    WPOM.hideLoader();
+                    $button.prop('disabled', false).text('Clean Options');
                     WPOM.showResult('<strong>Error:</strong> Ajax request failed.', 'error');
                 }
             });
