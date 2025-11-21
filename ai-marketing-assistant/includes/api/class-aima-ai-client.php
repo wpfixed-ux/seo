@@ -31,6 +31,8 @@ class AIMA_AI_Client {
             'name' => 'OpenAI',
             'api_url' => 'https://api.openai.com/v1/chat/completions',
             'models' => array(
+                'gpt-4o' => 'GPT-4o (Latest)',
+                'gpt-4o-mini' => 'GPT-4o Mini',
                 'gpt-4-turbo' => 'GPT-4 Turbo',
                 'gpt-4-turbo-preview' => 'GPT-4 Turbo Preview',
                 'gpt-4' => 'GPT-4',

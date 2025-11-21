@@ -15,11 +15,24 @@ class AIMA_Admin_Import {
             $this->process_csv_upload();
         }
 
+        if (isset($_POST['import_woocommerce'])) {
+            $this->import_woocommerce_orders();
+        }
+
         global $wpdb;
         $imports_table = $wpdb->prefix . 'aima_import_logs';
         $recent_imports = $wpdb->get_results(
             "SELECT * FROM $imports_table ORDER BY started_at DESC LIMIT 10"
         );
+
+        // Check if WooCommerce is active
+        $wc_active = class_exists('WooCommerce');
+
+        // Get WooCommerce stats if available
+        $wc_stats = array();
+        if ($wc_active) {
+            $wc_stats = $this->get_woocommerce_stats();
+        }
 
         include AIMA_ADMIN_DIR . 'views/import.php';
     }
@@ -284,5 +297,167 @@ class AIMA_Admin_Import {
         }
 
         return $data;
+    }
+
+    /**
+     * Import WooCommerce orders
+     */
+    public function import_woocommerce_orders() {
+        check_admin_referer('aima_import_woocommerce');
+
+        if (!class_exists('WooCommerce')) {
+            add_settings_error(
+                'aima_messages',
+                'aima_message',
+                __('WooCommerce is not installed or activated', 'ai-marketing-assistant'),
+                'error'
+            );
+            return;
+        }
+
+        // Get parameters
+        $order_status = isset($_POST['order_status']) ? sanitize_text_field($_POST['order_status']) : 'completed';
+        $days_back = isset($_POST['days_back']) ? intval($_POST['days_back']) : 90;
+        $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 500;
+
+        // Create import log
+        global $wpdb;
+        $imports_table = $wpdb->prefix . 'aima_import_logs';
+
+        $wpdb->insert(
+            $imports_table,
+            array(
+                'file_name' => 'WooCommerce Import',
+                'status' => 'processing'
+            ),
+            array('%s', '%s')
+        );
+
+        $import_id = $wpdb->insert_id;
+
+        // Get orders
+        $args = array(
+            'limit' => $limit,
+            'status' => $order_status,
+            'date_created' => '>=' . (time() - ($days_back * DAY_IN_SECONDS)),
+            'orderby' => 'date',
+            'order' => 'DESC'
+        );
+
+        $orders = wc_get_orders($args);
+
+        $result = array(
+            'total_rows' => count($orders),
+            'processed_rows' => 0,
+            'successful_rows' => 0,
+            'failed_rows' => 0,
+            'errors' => array()
+        );
+
+        // Process each order
+        require_once AIMA_MODULES_DIR . 'class-aima-woocommerce-integration.php';
+        $wc_integration = new AIMA_WooCommerce_Integration();
+
+        foreach ($orders as $order) {
+            try {
+                $order_id = $order->get_id();
+
+                // Track order (this will create/update customer and add purchases)
+                $wc_integration->track_new_order($order_id);
+
+                $result['successful_rows']++;
+            } catch (Exception $e) {
+                $result['failed_rows']++;
+                $result['errors'][] = sprintf(
+                    __('Order #%d: %s', 'ai-marketing-assistant'),
+                    $order_id,
+                    $e->getMessage()
+                );
+            }
+
+            $result['processed_rows']++;
+        }
+
+        // Update import log
+        $wpdb->update(
+            $imports_table,
+            array(
+                'total_rows' => $result['total_rows'],
+                'processed_rows' => $result['processed_rows'],
+                'successful_rows' => $result['successful_rows'],
+                'failed_rows' => $result['failed_rows'],
+                'status' => 'completed',
+                'completed_at' => current_time('mysql'),
+                'error_log' => !empty($result['errors']) ? wp_json_encode($result['errors']) : null
+            ),
+            array('id' => $import_id),
+            array('%d', '%d', '%d', '%d', '%s', '%s', '%s'),
+            array('%d')
+        );
+
+        if ($result['successful_rows'] > 0) {
+            add_settings_error(
+                'aima_messages',
+                'aima_message',
+                sprintf(
+                    __('Successfully imported %d orders from WooCommerce', 'ai-marketing-assistant'),
+                    $result['successful_rows']
+                ),
+                'updated'
+            );
+        }
+
+        if ($result['failed_rows'] > 0) {
+            add_settings_error(
+                'aima_messages',
+                'aima_message',
+                sprintf(
+                    __('%d orders failed to import', 'ai-marketing-assistant'),
+                    $result['failed_rows']
+                ),
+                'error'
+            );
+        }
+    }
+
+    /**
+     * Get WooCommerce statistics
+     */
+    private function get_woocommerce_stats() {
+        if (!function_exists('wc_get_orders')) {
+            return array();
+        }
+
+        global $wpdb;
+
+        // Count total orders
+        $total_orders = $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE post_type = 'shop_order' AND post_status IN ('wc-completed', 'wc-processing')"
+        );
+
+        // Count imported orders
+        $imported_orders = $wpdb->get_var(
+            "SELECT COUNT(DISTINCT order_id) FROM {$wpdb->prefix}aima_purchase_history WHERE source = 'woocommerce'"
+        );
+
+        // Count customers in WooCommerce
+        $wc_customers = $wpdb->get_var(
+            "SELECT COUNT(DISTINCT meta_value) FROM {$wpdb->prefix}postmeta
+            WHERE meta_key = '_billing_email'
+            AND post_id IN (SELECT ID FROM {$wpdb->prefix}posts WHERE post_type = 'shop_order' AND post_status IN ('wc-completed', 'wc-processing'))"
+        );
+
+        // Count imported customers
+        $imported_customers = $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}aima_customers WHERE source = 'woocommerce'"
+        );
+
+        return array(
+            'total_orders' => intval($total_orders),
+            'imported_orders' => intval($imported_orders),
+            'pending_orders' => max(0, intval($total_orders) - intval($imported_orders)),
+            'wc_customers' => intval($wc_customers),
+            'imported_customers' => intval($imported_customers)
+        );
     }
 }
