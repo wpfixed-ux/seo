@@ -269,6 +269,39 @@
     cursor: not-allowed;
 }
 
+.waa-chat-voice {
+    background: transparent;
+    color: var(--waa-primary);
+    border: 2px solid var(--waa-primary);
+    border-radius: var(--waa-radius);
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    transition: all 0.2s;
+    margin-right: 8px;
+}
+
+.waa-chat-voice:hover {
+    background: var(--waa-primary);
+    color: white;
+}
+
+.waa-chat-voice.recording {
+    background: #dc3232;
+    color: white;
+    border-color: #dc3232;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
 /* Floating Button */
 .waa-floating-wrapper {
     position: fixed;

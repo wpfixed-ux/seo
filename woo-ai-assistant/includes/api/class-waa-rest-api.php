@@ -184,6 +184,13 @@ class WAA_REST_API {
             ),
         ));
 
+        // Transcribe audio endpoint
+        register_rest_route($namespace, '/transcribe', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'handle_transcribe'),
+            'permission_callback' => '__return_true',
+        ));
+
         // Test connection endpoint (admin only)
         register_rest_route($namespace, '/test-connection', array(
             'methods' => 'POST',
@@ -642,6 +649,107 @@ class WAA_REST_API {
             'success' => true,
             'message' => 'Logs cleared successfully',
         ));
+    }
+
+    /**
+     * Handle audio transcription request
+     */
+    public function handle_transcribe($request) {
+        error_log('WAA REST: Transcribe endpoint called');
+
+        try {
+            // Rate limiting
+            $ip = $this->get_client_ip();
+            $rate_key = 'waa_rate_transcribe_' . md5($ip);
+            $rate_count = get_transient($rate_key);
+
+            if ($rate_count && $rate_count > 10) {
+                error_log('WAA REST: Transcription rate limit exceeded for ' . $ip);
+                return new WP_Error(
+                    'rate_limit',
+                    __('Too many transcription requests. Please wait a moment.', 'woo-ai-assistant'),
+                    array('status' => 429)
+                );
+            }
+
+            set_transient($rate_key, ($rate_count ? $rate_count + 1 : 1), MINUTE_IN_SECONDS);
+
+            // Get audio data from request
+            $files = $request->get_file_params();
+
+            if (empty($files['audio'])) {
+                return new WP_Error(
+                    'missing_audio',
+                    __('Audio file is required', 'woo-ai-assistant'),
+                    array('status' => 400)
+                );
+            }
+
+            $audio_file = $files['audio'];
+
+            // Validate file size (max 25MB for Whisper API)
+            if ($audio_file['size'] > 25 * 1024 * 1024) {
+                return new WP_Error(
+                    'file_too_large',
+                    __('Audio file is too large. Maximum size is 25MB', 'woo-ai-assistant'),
+                    array('status' => 400)
+                );
+            }
+
+            // Read audio data
+            $audio_data = file_get_contents($audio_file['tmp_name']);
+
+            if ($audio_data === false) {
+                return new WP_Error(
+                    'read_error',
+                    __('Failed to read audio file', 'woo-ai-assistant'),
+                    array('status' => 500)
+                );
+            }
+
+            error_log('WAA REST: Audio file received, size: ' . strlen($audio_data) . ' bytes');
+
+            // Get AI provider
+            $provider = get_option('waa_ai_provider', 'openai');
+
+            // Only OpenAI supports Whisper
+            if ($provider !== 'openai') {
+                return new WP_Error(
+                    'unsupported_provider',
+                    __('Audio transcription is only available with OpenAI', 'woo-ai-assistant'),
+                    array('status' => 400)
+                );
+            }
+
+            $openai = WAA_OpenAI::get_instance();
+
+            // Transcribe audio
+            $result = $openai->transcribe_audio($audio_data, $audio_file['name']);
+
+            if (!$result['success']) {
+                error_log('WAA REST: Transcription error: ' . $result['error']);
+                return new WP_Error(
+                    'transcription_error',
+                    $result['error'],
+                    array('status' => 500)
+                );
+            }
+
+            error_log('WAA REST: Transcription successful: ' . substr($result['text'], 0, 100));
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'text' => $result['text'],
+            ));
+
+        } catch (Exception $e) {
+            error_log('WAA REST Fatal Error in transcribe: ' . $e->getMessage());
+            return new WP_Error(
+                'internal_error',
+                'Internal server error: ' . $e->getMessage(),
+                array('status' => 500)
+            );
+        }
     }
 
     /**

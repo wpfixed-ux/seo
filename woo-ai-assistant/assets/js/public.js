@@ -34,7 +34,7 @@
 
                 searchTimeout = setTimeout(function() {
                     performSearch(query, language, $results);
-                }, 300);
+                }, 150);
             });
 
             // Close results on click outside
@@ -88,10 +88,14 @@
             var $messages = $chat.find('.waa-chat-messages');
             var $input = $chat.find('.waa-chat-input');
             var $send = $chat.find('.waa-chat-send');
+            var $voice = $chat.find('.waa-chat-voice');
             var $wrapper = $chat.closest('.waa-floating-wrapper');
             var sessionId = $wrapper.data('session') || $chat.data('session') || generateSessionId();
             var language = $wrapper.data('language') || $chat.data('language') || 'ru';
             var isProcessing = false;
+            var mediaRecorder = null;
+            var audioChunks = [];
+            var isRecording = false;
 
             // Enable/disable send button
             $input.on('input', function() {
@@ -112,6 +116,15 @@
             // Send button click
             $send.on('click', function() {
                 sendMessage();
+            });
+
+            // Voice button click
+            $voice.on('click', function() {
+                if (isRecording) {
+                    stopRecording();
+                } else {
+                    startRecording();
+                }
             });
 
             function sendMessage() {
@@ -405,6 +418,118 @@
                         product_id: productId,
                         event_type: eventType
                     })
+                });
+            }
+
+            // Start voice recording
+            function startRecording() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert('Ваш браузер не поддерживает запись голоса');
+                    return;
+                }
+
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        isRecording = true;
+                        audioChunks = [];
+
+                        // Create MediaRecorder
+                        mediaRecorder = new MediaRecorder(stream, {
+                            mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
+                        });
+
+                        mediaRecorder.ondataavailable = function(event) {
+                            if (event.data.size > 0) {
+                                audioChunks.push(event.data);
+                            }
+                        };
+
+                        mediaRecorder.onstop = function() {
+                            var audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            sendAudioForTranscription(audioBlob);
+
+                            // Stop all tracks
+                            stream.getTracks().forEach(function(track) {
+                                track.stop();
+                            });
+                        };
+
+                        mediaRecorder.start();
+
+                        // Update UI
+                        $voice.addClass('recording');
+                        $voice.find('.waa-mic-icon').hide();
+                        $voice.find('.waa-mic-recording').show();
+                        $input.prop('placeholder', 'Запись... Нажмите еще раз для остановки');
+                    })
+                    .catch(function(err) {
+                        console.error('Error accessing microphone:', err);
+                        alert('Не удалось получить доступ к микрофону. Проверьте разрешения браузера.');
+                    });
+            }
+
+            // Stop voice recording
+            function stopRecording() {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+
+                isRecording = false;
+
+                // Update UI
+                $voice.removeClass('recording');
+                $voice.find('.waa-mic-icon').show();
+                $voice.find('.waa-mic-recording').hide();
+                $input.prop('placeholder', 'Задайте вопрос о товарах...');
+            }
+
+            // Send audio for transcription
+            function sendAudioForTranscription(audioBlob) {
+                // Show processing indicator
+                var $transcribing = $('<div class="waa-message waa-message-assistant"><div class="waa-message-content">🎤 Распознавание речи...</div></div>');
+                $messages.append($transcribing);
+                scrollToBottom();
+
+                // Create FormData
+                var formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+
+                // Send to transcribe endpoint
+                $.ajax({
+                    url: waaConfig.restUrl + 'transcribe',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-WP-Nonce', waaConfig.nonce);
+                    },
+                    success: function(response) {
+                        $transcribing.remove();
+
+                        if (response.success && response.text) {
+                            // Set transcribed text to input
+                            $input.val(response.text);
+                            $send.prop('disabled', false);
+
+                            // Auto-send the message
+                            setTimeout(function() {
+                                sendMessage();
+                            }, 100);
+                        } else {
+                            addMessage('Не удалось распознать речь. Попробуйте еще раз.', 'assistant');
+                        }
+                    },
+                    error: function(xhr) {
+                        $transcribing.remove();
+                        var errorMsg = 'Ошибка при распознавании речи';
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+
+                        addMessage(errorMsg, 'assistant');
+                    }
                 });
             }
         });
