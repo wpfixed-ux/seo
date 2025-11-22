@@ -11,18 +11,18 @@
 class SAP_Image_Generator {
 
     /**
-     * Gemini AI instance
+     * Hugging Face AI instance
      *
-     * @var SAP_Gemini_AI
+     * @var SAP_HuggingFace_AI
      */
-    private $gemini;
+    private $huggingface;
 
     /**
      * Constructor
      */
     public function __construct() {
-        require_once SAP_INCLUDES_DIR . 'api/class-sap-gemini-ai.php';
-        $this->gemini = new SAP_Gemini_AI();
+        require_once SAP_INCLUDES_DIR . 'api/class-sap-huggingface-ai.php';
+        $this->huggingface = new SAP_HuggingFace_AI();
     }
 
     /**
@@ -36,7 +36,7 @@ class SAP_Image_Generator {
         add_action('wp_ajax_sap_generate_product_image', array($this, 'ajax_generate_product_image'));
         add_action('wp_ajax_sap_generate_article_image', array($this, 'ajax_generate_article_image'));
         add_action('wp_ajax_sap_change_image_background', array($this, 'ajax_change_background'));
-        add_action('wp_ajax_sap_test_gemini_connection', array($this, 'ajax_test_connection'));
+        add_action('wp_ajax_sap_test_huggingface_connection', array($this, 'ajax_test_connection'));
     }
 
     /**
@@ -83,14 +83,14 @@ class SAP_Image_Generator {
         wp_nonce_field('sap_image_generator_nonce', 'sap_image_generator_nonce');
 
         $settings = get_option('sap_settings', array());
-        $has_gemini_key = !empty($settings['gemini_api_key']);
+        $has_hf_key = !empty($settings['huggingface_api_key']);
 
         ?>
         <div class="sap-image-generator">
-            <?php if (!$has_gemini_key): ?>
+            <?php if (!$has_hf_key): ?>
             <div class="notice notice-warning inline">
                 <p>
-                    <?php _e('Gemini API key not configured.', 'seo-analytics-pro'); ?>
+                    <?php _e('Hugging Face API token not configured.', 'seo-analytics-pro'); ?>
                     <a href="<?php echo admin_url('admin.php?page=seo-analytics-pro-settings'); ?>"><?php _e('Configure', 'seo-analytics-pro'); ?></a>
                 </p>
             </div>
@@ -101,32 +101,32 @@ class SAP_Image_Generator {
                 <h4><?php _e('Change Product Background', 'seo-analytics-pro'); ?></h4>
 
                 <div class="sap-background-presets">
-                    <button type="button" class="button sap-bg-preset" data-preset="white" <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                    <button type="button" class="button sap-bg-preset" data-preset="white" <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <span class="dashicons dashicons-format-image"></span>
                         <?php _e('White Background', 'seo-analytics-pro'); ?>
                     </button>
 
-                    <button type="button" class="button sap-bg-preset" data-preset="pastel" <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                    <button type="button" class="button sap-bg-preset" data-preset="pastel" <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <span class="dashicons dashicons-art"></span>
                         <?php _e('Pastel Background', 'seo-analytics-pro'); ?>
                     </button>
 
-                    <button type="button" class="button sap-bg-preset" data-preset="gradient" <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                    <button type="button" class="button sap-bg-preset" data-preset="gradient" <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <span class="dashicons dashicons-admin-customizer"></span>
                         <?php _e('Gradient Background', 'seo-analytics-pro'); ?>
                     </button>
 
-                    <button type="button" class="button sap-bg-preset" data-preset="3d" <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                    <button type="button" class="button sap-bg-preset" data-preset="3d" <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <span class="dashicons dashicons-awards"></span>
                         <?php _e('3D Background', 'seo-analytics-pro'); ?>
                     </button>
 
-                    <button type="button" class="button sap-bg-preset" data-preset="custom" <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                    <button type="button" class="button sap-bg-preset" data-preset="custom" <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <span class="dashicons dashicons-admin-generic"></span>
                         <?php _e('Custom Background', 'seo-analytics-pro'); ?>
                     </button>
 
-                    <button type="button" class="button sap-bg-preset" data-preset="ai" <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                    <button type="button" class="button sap-bg-preset" data-preset="ai" <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <span class="dashicons dashicons-lightbulb"></span>
                         <?php _e('AI Generated', 'seo-analytics-pro'); ?>
                     </button>
@@ -148,7 +148,7 @@ class SAP_Image_Generator {
                             id="sap-apply-background"
                             class="button button-primary"
                             data-post-id="<?php echo $post->ID; ?>"
-                            <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                            <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <?php _e('Apply Background', 'seo-analytics-pro'); ?>
                     </button>
                     <span class="spinner"></span>
@@ -177,7 +177,7 @@ class SAP_Image_Generator {
                             id="sap-generate-product-image"
                             class="button button-primary"
                             data-post-id="<?php echo $post->ID; ?>"
-                            <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                            <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <?php _e('Generate Image', 'seo-analytics-pro'); ?>
                     </button>
                     <span class="spinner"></span>
@@ -215,14 +215,14 @@ class SAP_Image_Generator {
         wp_nonce_field('sap_image_generator_nonce', 'sap_image_generator_nonce');
 
         $settings = get_option('sap_settings', array());
-        $has_gemini_key = !empty($settings['gemini_api_key']);
+        $has_hf_key = !empty($settings['huggingface_api_key']);
 
         ?>
         <div class="sap-image-generator">
-            <?php if (!$has_gemini_key): ?>
+            <?php if (!$has_hf_key): ?>
             <div class="notice notice-warning inline">
                 <p>
-                    <?php _e('Gemini API key not configured.', 'seo-analytics-pro'); ?>
+                    <?php _e('Hugging Face API token not configured.', 'seo-analytics-pro'); ?>
                     <a href="<?php echo admin_url('admin.php?page=seo-analytics-pro-settings'); ?>"><?php _e('Configure', 'seo-analytics-pro'); ?></a>
                 </p>
             </div>
@@ -265,7 +265,7 @@ class SAP_Image_Generator {
                             id="sap-generate-article-image"
                             class="button button-primary"
                             data-post-id="<?php echo $post->ID; ?>"
-                            <?php echo !$has_gemini_key ? 'disabled' : ''; ?>>
+                            <?php echo !$has_hf_key ? 'disabled' : ''; ?>>
                         <?php _e('Generate Image', 'seo-analytics-pro'); ?>
                     </button>
                     <span class="spinner"></span>
@@ -326,9 +326,8 @@ class SAP_Image_Generator {
         $log[] = '[' . current_time('H:i:s') . '] ' . __('Prompt:', 'seo-analytics-pro') . ' ' . $prompt;
 
         // Generate image
-        $result = $this->gemini->generate_image($prompt, array(
-            'aspect_ratio' => '1:1',
-            'number_of_images' => 1
+        $result = $this->huggingface->generate_image($prompt, array(
+            'aspect_ratio' => '1:1'
         ));
 
         if (is_wp_error($result)) {
@@ -344,7 +343,7 @@ class SAP_Image_Generator {
         // Save to media library
         if (!empty($result['images'][0]['data'])) {
             $filename = 'product-' . $post_id . '-' . time() . '.png';
-            $attachment_id = $this->gemini->save_to_media_library($result['images'][0]['data'], $filename, $post_id);
+            $attachment_id = $this->huggingface->save_to_media_library($result['images'][0]['data'], $filename, $post_id);
 
             if (is_wp_error($attachment_id)) {
                 $log[] = '[' . current_time('H:i:s') . '] ' . __('Error saving image:', 'seo-analytics-pro') . ' ' . $attachment_id->get_error_message();
@@ -413,7 +412,7 @@ class SAP_Image_Generator {
             'custom_prompt' => $auto_prompt ? '' : $prompt
         );
 
-        $result = $this->gemini->generate_article_image($post->post_title, $post->post_content, $options);
+        $result = $this->huggingface->generate_article_image($post->post_title, $post->post_content, $options);
 
         if (is_wp_error($result)) {
             $log[] = '[' . current_time('H:i:s') . '] ' . __('Error:', 'seo-analytics-pro') . ' ' . $result->get_error_message();
@@ -428,7 +427,7 @@ class SAP_Image_Generator {
         // Save to media library
         if (!empty($result['images'][0]['data'])) {
             $filename = 'article-' . $post_id . '-' . time() . '.png';
-            $attachment_id = $this->gemini->save_to_media_library($result['images'][0]['data'], $filename, $post_id);
+            $attachment_id = $this->huggingface->save_to_media_library($result['images'][0]['data'], $filename, $post_id);
 
             if (is_wp_error($attachment_id)) {
                 $log[] = '[' . current_time('H:i:s') . '] ' . __('Error saving image:', 'seo-analytics-pro') . ' ' . $attachment_id->get_error_message();
@@ -498,7 +497,7 @@ class SAP_Image_Generator {
             'custom_background' => $custom_prompt
         );
 
-        $result = $this->gemini->change_background($image_url, $preset, $options);
+        $result = $this->huggingface->change_background($image_url, $preset, $options);
 
         if (is_wp_error($result)) {
             $log[] = '[' . current_time('H:i:s') . '] ' . __('Error:', 'seo-analytics-pro') . ' ' . $result->get_error_message();
@@ -513,7 +512,7 @@ class SAP_Image_Generator {
         // Save new image
         if (!empty($result['images'][0]['data'])) {
             $filename = 'product-' . $post_id . '-bg-' . $preset . '-' . time() . '.png';
-            $attachment_id = $this->gemini->save_to_media_library($result['images'][0]['data'], $filename, $post_id);
+            $attachment_id = $this->huggingface->save_to_media_library($result['images'][0]['data'], $filename, $post_id);
 
             if (!is_wp_error($attachment_id)) {
                 $log[] = '[' . current_time('H:i:s') . '] ' . __('New image saved to media library', 'seo-analytics-pro');
@@ -536,7 +535,7 @@ class SAP_Image_Generator {
     }
 
     /**
-     * AJAX: Test Gemini connection
+     * AJAX: Test Hugging Face connection
      */
     public function ajax_test_connection() {
         check_ajax_referer('sap_nonce', 'nonce');
@@ -545,7 +544,7 @@ class SAP_Image_Generator {
             wp_send_json_error(array('message' => __('Permission denied', 'seo-analytics-pro')));
         }
 
-        $result = $this->gemini->test_connection();
+        $result = $this->huggingface->test_connection();
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

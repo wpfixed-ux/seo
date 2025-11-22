@@ -63,8 +63,8 @@
                 }
             });
 
-            // Test Gemini connection (on settings page)
-            $(document).on('click', '#test-gemini-connection', function(e) {
+            // Test Hugging Face connection (on settings page)
+            $(document).on('click', '#test-huggingface-connection', function(e) {
                 e.preventDefault();
                 self.testConnection($(this));
             });
@@ -265,7 +265,7 @@
         },
 
         /**
-         * Test Gemini API connection
+         * Test Hugging Face API connection
          */
         testConnection: function($btn) {
             var $spinner = $('<span class="spinner is-active" style="float:none;margin-left:10px;"></span>');
@@ -276,7 +276,7 @@
                 url: sapData.ajaxurl,
                 type: 'POST',
                 data: {
-                    action: 'sap_test_gemini_connection',
+                    action: 'sap_test_huggingface_connection',
                     nonce: sapData.nonce
                 },
                 success: function(response) {
@@ -284,7 +284,11 @@
                     $btn.prop('disabled', false);
 
                     if (response.success) {
-                        alert(__('Gemini API connection successful!'));
+                        var message = __('Hugging Face API connection successful!');
+                        if (response.data.model_used) {
+                            message += '\n' + __('Model: ') + response.data.model_used;
+                        }
+                        alert(message);
                     } else {
                         alert(__('Connection failed: ') + response.data.message);
                     }

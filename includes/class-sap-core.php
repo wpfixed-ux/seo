@@ -75,7 +75,7 @@ class SAP_Core {
          */
         require_once SAP_INCLUDES_DIR . 'api/class-sap-rest-api.php';
         require_once SAP_INCLUDES_DIR . 'api/class-sap-claude-ai.php';
-        require_once SAP_INCLUDES_DIR . 'api/class-sap-gemini-ai.php';
+        require_once SAP_INCLUDES_DIR . 'api/class-sap-huggingface-ai.php';
         require_once SAP_INCLUDES_DIR . 'api/class-sap-scraper.php';
         require_once SAP_INCLUDES_DIR . 'api/class-sap-serp.php';
 

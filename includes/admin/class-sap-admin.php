@@ -119,8 +119,8 @@ class SAP_Admin {
             $sanitized['claude_ai_api_key'] = sanitize_text_field($input['claude_ai_api_key']);
         }
 
-        if (isset($input['gemini_api_key'])) {
-            $sanitized['gemini_api_key'] = sanitize_text_field($input['gemini_api_key']);
+        if (isset($input['huggingface_api_key'])) {
+            $sanitized['huggingface_api_key'] = sanitize_text_field($input['huggingface_api_key']);
         }
 
         if (isset($input['serp_api_key'])) {
@@ -477,18 +477,18 @@ keyword 3"></textarea>
                     </div>
 
                     <div class="sap-form-row">
-                        <label for="gemini-api-key">
-                            <?php _e('Gemini AI API Key', 'seo-analytics-pro'); ?>
+                        <label for="huggingface-api-key">
+                            <?php _e('Hugging Face API Token', 'seo-analytics-pro'); ?>
                             <span class="sap-help">
-                                <a href="https://aistudio.google.com/app/apikey" target="_blank"><?php _e('Get API Key', 'seo-analytics-pro'); ?></a>
+                                <a href="https://huggingface.co/settings/tokens" target="_blank"><?php _e('Get API Token', 'seo-analytics-pro'); ?></a>
                             </span>
                         </label>
                         <input type="password"
-                               id="gemini-api-key"
-                               name="sap_settings[gemini_api_key]"
-                               value="<?php echo esc_attr($settings['gemini_api_key'] ?? ''); ?>"
+                               id="huggingface-api-key"
+                               name="sap_settings[huggingface_api_key]"
+                               value="<?php echo esc_attr($settings['huggingface_api_key'] ?? ''); ?>"
                                class="regular-text">
-                        <p class="description"><?php _e('Required for AI image generation (free tier available). Use "nano" model for free access.', 'seo-analytics-pro'); ?></p>
+                        <p class="description"><?php _e('Required for AI image generation. Completely FREE to use! Uses Stable Diffusion XL.', 'seo-analytics-pro'); ?></p>
                     </div>
 
                     <div class="sap-form-row">
@@ -608,7 +608,7 @@ keyword 3"></textarea>
                 <div class="sap-form-actions">
                     <?php submit_button(__('Save Settings', 'seo-analytics-pro'), 'primary', 'submit', false); ?>
                     <button type="button" class="button" id="test-api-keys"><?php _e('Test API Keys', 'seo-analytics-pro'); ?></button>
-                    <button type="button" class="button" id="test-gemini-connection"><?php _e('Test Gemini API', 'seo-analytics-pro'); ?></button>
+                    <button type="button" class="button" id="test-huggingface-connection"><?php _e('Test Hugging Face API', 'seo-analytics-pro'); ?></button>
                 </div>
             </form>
 
