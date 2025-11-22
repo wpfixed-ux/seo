@@ -1,0 +1,189 @@
+/**
+ * AI Image Generator - Admin Styles
+ */
+
+/* Settings Page */
+.aimg-wrap {
+    max-width: 900px;
+}
+
+.aimg-form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.aimg-form-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.aimg-results {
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.aimg-results.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.aimg-results.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Metabox Styles */
+.aimg-image-generator {
+    font-size: 13px;
+}
+
+.aimg-image-generator .aimg-section {
+    margin-bottom: 15px;
+}
+
+.aimg-image-generator .aimg-section h4 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+}
+
+.aimg-image-generator .aimg-form-field {
+    margin-bottom: 10px;
+}
+
+.aimg-image-generator .aimg-form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.aimg-image-generator .description {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Background Presets */
+.aimg-background-presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+}
+
+.aimg-background-presets .button {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px 10px;
+    height: auto;
+}
+
+.aimg-background-presets .button.active {
+    background: #2271b1;
+    color: #fff;
+    border-color: #135e96;
+}
+
+.aimg-background-presets .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+}
+
+/* Result Area */
+.aimg-result {
+    padding: 10px;
+    border-radius: 3px;
+}
+
+.aimg-result.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.aimg-result.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.aimg-result p {
+    margin: 0 0 10px 0;
+}
+
+.aimg-result img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 3px;
+}
+
+/* Log Area */
+.aimg-log {
+    border: 1px solid #ddd;
+    padding: 10px;
+    background: #fff;
+    border-radius: 3px;
+}
+
+.aimg-log h4 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+}
+
+.aimg-log-content {
+    background: #f5f5f5;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    border-radius: 3px;
+}
+
+/* Custom Prompt */
+.aimg-custom-prompt {
+    margin-top: 10px;
+}
+
+.aimg-custom-prompt label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+/* Buttons */
+.aimg-image-generator .button {
+    margin-right: 5px;
+}
+
+.aimg-image-generator .spinner {
+    float: none;
+    margin: 0 5px;
+    vertical-align: middle;
+}
+
+/* Notice */
+.aimg-image-generator .notice.inline {
+    margin: 0 0 15px 0;
+    padding: 10px;
+}
+
+.aimg-image-generator .notice.inline p {
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .aimg-background-presets {
+        grid-template-columns: 1fr;
+    }
+}
