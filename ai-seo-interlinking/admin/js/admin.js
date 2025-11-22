@@ -64,9 +64,11 @@
             const $button = $(this);
             const $status = $('#connection-status');
             const apiKey = $('#openai_api_key').val();
+            const hasSavedKey = $('#openai_api_key').attr('placeholder').indexOf('sk-') === 0;
 
-            if (!apiKey) {
-                AIL_Admin.showNotice($status, 'error', ailAdmin.strings.error + ': API key is required');
+            // Allow testing with saved key (empty field) OR new key (filled field)
+            if (!apiKey && !hasSavedKey) {
+                AIL_Admin.showNotice($status, 'error', ailAdmin.strings.error + ': API key is required. Please enter an API key or save one first.');
                 return;
             }
 
@@ -79,7 +81,7 @@
                 data: {
                     action: 'ail_test_connection',
                     nonce: ailAdmin.nonce,
-                    api_key: apiKey
+                    api_key: apiKey  // Send empty string if testing saved key
                 },
                 success: function(response) {
                     if (response.success) {

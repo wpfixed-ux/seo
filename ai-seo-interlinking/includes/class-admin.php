@@ -134,14 +134,21 @@ class AIL_Admin {
      * Sanitize settings
      */
     public function sanitize_settings($input) {
+        // Get existing settings first
+        $existing = get_option('ail_settings', []);
         $sanitized = [];
 
-        // API Settings
+        // API Settings - preserve existing key if input is empty
         if (isset($input['openai_api_key']) && !empty($input['openai_api_key'])) {
             $api_key = sanitize_text_field($input['openai_api_key']);
             // Only encrypt if it's not already encrypted and not empty
             if (!empty($api_key)) {
                 $sanitized['openai_api_key'] = AIL_AI_Processor::encrypt_api_key($api_key);
+            }
+        } else {
+            // Preserve existing API key if not updating
+            if (isset($existing['openai_api_key'])) {
+                $sanitized['openai_api_key'] = $existing['openai_api_key'];
             }
         }
 
@@ -214,8 +221,7 @@ class AIL_Admin {
             $sanitized['language_detection'] = sanitize_text_field($input['language_detection']);
         }
 
-        // Merge with existing settings
-        $existing = get_option('ail_settings', []);
+        // Merge with existing settings (existing already loaded at top of function)
         return array_merge($existing, $sanitized);
     }
 
@@ -270,24 +276,33 @@ class AIL_Admin {
 
         $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
 
+        // If no key provided in request, try to use the saved key
         if (empty($api_key)) {
-            wp_send_json_error(['message' => __('API key is required', 'ai-seo-interlinking')]);
-        }
-
-        // Temporarily set API key
-        $settings = get_option('ail_settings', []);
-        $old_key = isset($settings['openai_api_key']) ? $settings['openai_api_key'] : '';
-        $settings['openai_api_key'] = AIL_AI_Processor::encrypt_api_key($api_key);
-        update_option('ail_settings', $settings);
-
-        // Test connection
-        $ai = AIL_AI_Processor::get_instance();
-        $result = $ai->test_connection();
-
-        // Restore old key if test failed
-        if (!$result['success']) {
-            $settings['openai_api_key'] = $old_key;
+            $settings = get_option('ail_settings', []);
+            if (empty($settings['openai_api_key'])) {
+                wp_send_json_error(['message' => __('API key is required. Please enter an API key or save one first.', 'ai-seo-interlinking')]);
+            }
+            // Use saved key - reload instance to get current settings
+            $ai = AIL_AI_Processor::reload_instance();
+            $result = $ai->test_connection();
+        } else {
+            // Test with provided key (temporarily)
+            $settings = get_option('ail_settings', []);
+            $old_key = isset($settings['openai_api_key']) ? $settings['openai_api_key'] : '';
+            $settings['openai_api_key'] = AIL_AI_Processor::encrypt_api_key($api_key);
             update_option('ail_settings', $settings);
+
+            // Reload instance to pick up new key
+            $ai = AIL_AI_Processor::reload_instance();
+            $result = $ai->test_connection();
+
+            // Restore old key if test failed
+            if (!$result['success']) {
+                $settings['openai_api_key'] = $old_key;
+                update_option('ail_settings', $settings);
+                // Reload again to restore old key in instance
+                AIL_AI_Processor::reload_instance();
+            }
         }
 
         if ($result['success']) {

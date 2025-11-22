@@ -445,6 +445,21 @@ Format: JSON array with structure: [{"keyword": "...", "type": "primary|lsi|long
         $encryption_key = wp_salt('auth');
         $iv = substr(hash('sha256', wp_salt('secure_auth')), 0, 16);
 
-        return openssl_decrypt(base64_decode($encrypted_key), $method, $encryption_key, 0, $iv);
+        $decrypted = openssl_decrypt(base64_decode($encrypted_key), $method, $encryption_key, 0, $iv);
+
+        // Handle decryption failure
+        if ($decrypted === false) {
+            return '';
+        }
+
+        return $decrypted;
+    }
+
+    /**
+     * Reload instance (force refresh from settings)
+     */
+    public static function reload_instance() {
+        self::$instance = null;
+        return self::get_instance();
     }
 }
