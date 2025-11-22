@@ -25,7 +25,10 @@
             $('.wpom-btn-analyze-plugin').on('click', this.analyzePlugin);
             $(document).on('click', '.wpom-btn-clean-plugin', this.cleanPlugin);
 
-            // Diagnostic page actions
+            // Diagnostic page actions - prefix viewer and deleter
+            $('.wpom-btn-view-prefix-options').on('click', this.viewPrefixOptions);
+            $('.wpom-btn-delete-prefix').on('click', this.deletePrefix);
+            $('.wpom-btn-delete-single-option').on('click', this.deleteSingleOption);
             $('.wpom-btn-refresh-diagnostic').on('click', this.refreshDiagnostic);
 
             // Pattern input change
@@ -508,6 +511,176 @@
                 error: function() {
                     WPOM.hideLoader();
                     $button.prop('disabled', false).text('Clean Options');
+                    WPOM.showResult('<strong>Error:</strong> Ajax request failed.', 'error');
+                }
+            });
+        },
+
+        viewPrefixOptions: function(e) {
+            e.preventDefault();
+
+            const $button = $(this);
+            const prefix = $button.data('prefix');
+            const $detailsRow = $('#wpom-prefix-details-' + prefix);
+            const $contentDiv = $detailsRow.find('.wpom-prefix-options-list');
+            const $loader = $detailsRow.find('.wpom-loader-small');
+
+            // Toggle visibility
+            if ($detailsRow.is(':visible')) {
+                $detailsRow.slideUp(200);
+                $button.html('<span class="dashicons dashicons-visibility"></span> View');
+                return;
+            }
+
+            // Show row and loader
+            $detailsRow.show();
+            $loader.show();
+            $button.html('<span class="dashicons dashicons-hidden"></span> Hide');
+
+            // If already loaded, just show
+            if ($contentDiv.html() !== '') {
+                $loader.hide();
+                return;
+            }
+
+            // Load data via AJAX
+            $.ajax({
+                url: wpomAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'wpom_view_prefix_options',
+                    nonce: wpomAjax.nonce,
+                    prefix: prefix
+                },
+                success: function(response) {
+                    $loader.hide();
+
+                    if (response.success && response.data.options.length > 0) {
+                        let html = '<table class="widefat"><thead><tr>';
+                        html += '<th>Option Name</th><th>Size (KB)</th><th>Autoload</th>';
+                        html += '</tr></thead><tbody>';
+
+                        response.data.options.forEach(function(option) {
+                            html += '<tr>';
+                            html += '<td><code>' + option.option_name + '</code></td>';
+                            html += '<td>' + option.size_kb + '</td>';
+                            html += '<td>' + option.autoload + '</td>';
+                            html += '</tr>';
+                        });
+
+                        html += '</tbody></table>';
+
+                        if (response.data.count >= 100) {
+                            html += '<p class="description">Showing first 100 options.</p>';
+                        }
+
+                        $contentDiv.html(html);
+                    } else {
+                        $contentDiv.html('<p>No options found or error loading data.</p>');
+                    }
+                },
+                error: function() {
+                    $loader.hide();
+                    $contentDiv.html('<p class="wpom-text-error">Error loading options.</p>');
+                }
+            });
+        },
+
+        deletePrefix: function(e) {
+            e.preventDefault();
+
+            const $button = $(this);
+            const prefix = $button.data('prefix');
+            const label = $button.data('label');
+            const count = $button.data('count');
+
+            if (!confirm('Are you sure you want to delete ALL ' + count + ' options for "' + label + '" (' + prefix + '*)?\n\nThis action will:\n- Delete all matching options from wp_options table\n- Create an automatic backup\n- Free up database space\n\nProtected WordPress core options will NOT be deleted.\n\nYou can restore from backup if needed.')) {
+                return;
+            }
+
+            // Show loading state
+            $button.prop('disabled', true).text('Deleting...');
+            WPOM.showLoader();
+
+            $.ajax({
+                url: wpomAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'wpom_delete_prefix',
+                    nonce: wpomAjax.nonce,
+                    prefix: prefix
+                },
+                success: function(response) {
+                    WPOM.hideLoader();
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span> Delete All');
+
+                    if (response.success) {
+                        const message = '<strong>Success!</strong> Deleted ' + response.data.deleted + ' options (' + label + '). ' +
+                                      'Freed ' + response.data.size_freed_kb + ' KB. ' +
+                                      (response.data.protected > 0 ? response.data.protected + ' protected options were skipped. ' : '') +
+                                      'Backup ID: #' + response.data.backup_id;
+                        WPOM.showResult(message, 'success');
+
+                        // Reload page after 3 seconds
+                        setTimeout(function() {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        WPOM.showResult('<strong>Error:</strong> ' + response.data.error, 'error');
+                    }
+                },
+                error: function() {
+                    WPOM.hideLoader();
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span> Delete All');
+                    WPOM.showResult('<strong>Error:</strong> Ajax request failed.', 'error');
+                }
+            });
+        },
+
+        deleteSingleOption: function(e) {
+            e.preventDefault();
+
+            const $button = $(this);
+            const optionName = $button.data('option-name');
+            const size = $button.data('size');
+
+            if (!confirm('Are you sure you want to delete option "' + optionName + '"?\n\nSize: ' + size + ' KB\n\nThis action will:\n- Delete this option from wp_options table\n- Create an automatic backup\n\nYou can restore from backup if needed.')) {
+                return;
+            }
+
+            // Show loading state
+            $button.prop('disabled', true).text('Deleting...');
+            WPOM.showLoader();
+
+            $.ajax({
+                url: wpomAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'wpom_delete_single_option',
+                    nonce: wpomAjax.nonce,
+                    option_name: optionName
+                },
+                success: function(response) {
+                    WPOM.hideLoader();
+
+                    if (response.success) {
+                        const message = '<strong>Success!</strong> Deleted option "' + optionName + '". ' +
+                                      'Freed ' + response.data.size_freed_kb + ' KB. ' +
+                                      'Backup ID: #' + response.data.backup_id;
+                        WPOM.showResult(message, 'success');
+
+                        // Remove the row from table
+                        $button.closest('tr').fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                    } else {
+                        $button.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span> Delete');
+                        WPOM.showResult('<strong>Error:</strong> ' + response.data.error, 'error');
+                    }
+                },
+                error: function() {
+                    WPOM.hideLoader();
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span> Delete');
                     WPOM.showResult('<strong>Error:</strong> Ajax request failed.', 'error');
                 }
             });

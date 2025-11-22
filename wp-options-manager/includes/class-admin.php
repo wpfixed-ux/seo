@@ -44,6 +44,9 @@ class WPOM_Admin {
         add_action('wp_ajax_wpom_disable_autoload', array($this, 'ajax_disable_autoload'));
         add_action('wp_ajax_wpom_analyze_plugin', array($this, 'ajax_analyze_plugin'));
         add_action('wp_ajax_wpom_clean_plugin', array($this, 'ajax_clean_plugin'));
+        add_action('wp_ajax_wpom_view_prefix_options', array($this, 'ajax_view_prefix_options'));
+        add_action('wp_ajax_wpom_delete_prefix', array($this, 'ajax_delete_prefix'));
+        add_action('wp_ajax_wpom_delete_single_option', array($this, 'ajax_delete_single_option'));
     }
 
     /**
@@ -346,6 +349,89 @@ class WPOM_Admin {
 
         $cleaner = WPOM_Cleaner::get_instance();
         $result = $cleaner->clean_plugin_options($plugin_slug, true);
+
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
+    /**
+     * AJAX: Просмотр опций по префиксу
+     */
+    public function ajax_view_prefix_options() {
+        check_ajax_referer('wpom_ajax_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+            return;
+        }
+
+        $prefix = isset($_POST['prefix']) ? sanitize_text_field($_POST['prefix']) : '';
+
+        if (empty($prefix)) {
+            wp_send_json_error(array('message' => 'Prefix is required'));
+            return;
+        }
+
+        $cleaner = WPOM_Cleaner::get_instance();
+        $options = $cleaner->get_options_by_prefix($prefix, 100);
+
+        wp_send_json_success(array(
+            'options' => $options,
+            'count' => count($options),
+        ));
+    }
+
+    /**
+     * AJAX: Удаление всех опций по префиксу
+     */
+    public function ajax_delete_prefix() {
+        check_ajax_referer('wpom_ajax_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+            return;
+        }
+
+        $prefix = isset($_POST['prefix']) ? sanitize_text_field($_POST['prefix']) : '';
+
+        if (empty($prefix)) {
+            wp_send_json_error(array('message' => 'Prefix is required'));
+            return;
+        }
+
+        $cleaner = WPOM_Cleaner::get_instance();
+        $result = $cleaner->delete_options_by_prefix($prefix, true);
+
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
+    /**
+     * AJAX: Удаление одной опции
+     */
+    public function ajax_delete_single_option() {
+        check_ajax_referer('wpom_ajax_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+            return;
+        }
+
+        $option_name = isset($_POST['option_name']) ? sanitize_text_field($_POST['option_name']) : '';
+
+        if (empty($option_name)) {
+            wp_send_json_error(array('message' => 'Option name is required'));
+            return;
+        }
+
+        $cleaner = WPOM_Cleaner::get_instance();
+        $result = $cleaner->delete_single_option($option_name, true);
 
         if ($result['success']) {
             wp_send_json_success($result);

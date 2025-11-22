@@ -30,12 +30,13 @@ $top_options = $diagnostic->get_top_large_options(20);
                         <th><?php _e('Count', 'wp-options-manager'); ?></th>
                         <th><?php _e('Size (KB)', 'wp-options-manager'); ?></th>
                         <th><?php _e('Size (MB)', 'wp-options-manager'); ?></th>
+                        <th><?php _e('Actions', 'wp-options-manager'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!empty($data_by_prefix)): ?>
                         <?php foreach ($data_by_prefix as $prefix => $data): ?>
-                            <tr>
+                            <tr class="wpom-prefix-row" data-prefix="<?php echo esc_attr($prefix); ?>">
                                 <td>
                                     <strong><?php echo esc_html($data['label']); ?></strong>
                                     <br>
@@ -50,11 +51,29 @@ $top_options = $diagnostic->get_top_large_options(20);
                                         <?php echo esc_html(number_format($data['size_mb'], 2)); ?>
                                     <?php endif; ?>
                                 </td>
+                                <td>
+                                    <button type="button" class="button button-small wpom-btn-view-prefix-options" data-prefix="<?php echo esc_attr($prefix); ?>">
+                                        <span class="dashicons dashicons-visibility"></span> <?php _e('View', 'wp-options-manager'); ?>
+                                    </button>
+                                    <button type="button" class="button button-small button-link-delete wpom-btn-delete-prefix" data-prefix="<?php echo esc_attr($prefix); ?>" data-label="<?php echo esc_attr($data['label']); ?>" data-count="<?php echo esc_attr($data['count']); ?>">
+                                        <span class="dashicons dashicons-trash"></span> <?php _e('Delete All', 'wp-options-manager'); ?>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="wpom-prefix-details" id="wpom-prefix-details-<?php echo esc_attr($prefix); ?>" style="display: none;">
+                                <td colspan="5">
+                                    <div class="wpom-prefix-details-content">
+                                        <div class="wpom-loader-small" style="display: none;">
+                                            <span class="spinner is-active"></span> Loading...
+                                        </div>
+                                        <div class="wpom-prefix-options-list"></div>
+                                    </div>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="4"><?php _e('No data found', 'wp-options-manager'); ?></td>
+                            <td colspan="5"><?php _e('No data found', 'wp-options-manager'); ?></td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -72,6 +91,7 @@ $top_options = $diagnostic->get_top_large_options(20);
                             <th><?php _e('Size (KB)', 'wp-options-manager'); ?></th>
                             <th><?php _e('Autoload', 'wp-options-manager'); ?></th>
                             <th><?php _e('Source', 'wp-options-manager'); ?></th>
+                            <th><?php _e('Actions', 'wp-options-manager'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,11 +119,18 @@ $top_options = $diagnostic->get_top_large_options(20);
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo esc_html($option['source']); ?></td>
+                                    <td>
+                                        <button type="button" class="button button-small button-link-delete wpom-btn-delete-single-option"
+                                                data-option-name="<?php echo esc_attr($option['option_name']); ?>"
+                                                data-size="<?php echo esc_attr($option['size_kb']); ?>">
+                                            <span class="dashicons dashicons-trash"></span> <?php _e('Delete', 'wp-options-manager'); ?>
+                                        </button>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="4"><?php _e('No data found', 'wp-options-manager'); ?></td>
+                                <td colspan="5"><?php _e('No data found', 'wp-options-manager'); ?></td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

@@ -862,4 +862,256 @@ class WPOM_Cleaner {
             );
         }
     }
+
+    /**
+     * Получить опции по префиксу
+     *
+     * @param string $prefix Префикс для поиска
+     * @param int $limit Лимит записей (по умолчанию 100)
+     * @return array Список опций
+     */
+    public function get_options_by_prefix($prefix, $limit = 100) {
+        global $wpdb;
+
+        $pattern = $wpdb->esc_like($prefix) . '%';
+        $limit = intval($limit);
+
+        $results = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT option_name, LENGTH(option_value) as size, autoload
+                FROM {$wpdb->options}
+                WHERE option_name LIKE %s
+                ORDER BY size DESC
+                LIMIT %d",
+                $pattern,
+                $limit
+            )
+        );
+
+        $options = array();
+        foreach ($results as $row) {
+            $options[] = array(
+                'option_name' => $row->option_name,
+                'size' => $row->size,
+                'size_kb' => round($row->size / 1024, 2),
+                'autoload' => $row->autoload,
+            );
+        }
+
+        return $options;
+    }
+
+    /**
+     * Удалить все опции по префиксу
+     *
+     * @param string $prefix Префикс для удаления
+     * @param bool $create_backup Создавать ли бэкап
+     * @return array Результат операции
+     */
+    public function delete_options_by_prefix($prefix, $create_backup = true) {
+        global $wpdb;
+
+        try {
+            // Начинаем транзакцию
+            $wpdb->query('START TRANSACTION');
+
+            // Получаем список опций для удаления
+            $pattern = $wpdb->esc_like($prefix) . '%';
+            $options_to_delete = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT option_name, option_value, LENGTH(option_value) as size
+                    FROM {$wpdb->options}
+                    WHERE option_name LIKE %s",
+                    $pattern
+                )
+            );
+
+            if (empty($options_to_delete)) {
+                $wpdb->query('ROLLBACK');
+                return array(
+                    'success' => false,
+                    'error' => 'No options found with this prefix',
+                );
+            }
+
+            // Проверяем защищенные опции
+            $deleted_count = 0;
+            $total_size_freed = 0;
+            $protected_count = 0;
+            $options_data = array();
+
+            foreach ($options_to_delete as $option) {
+                // Пропускаем защищенные опции
+                if ($this->is_protected_option($option->option_name)) {
+                    $protected_count++;
+                    continue;
+                }
+
+                $options_data[] = array(
+                    'option_name' => $option->option_name,
+                    'option_value' => $option->option_value,
+                );
+
+                $deleted_count++;
+                $total_size_freed += $option->size;
+            }
+
+            if ($deleted_count === 0) {
+                $wpdb->query('ROLLBACK');
+                return array(
+                    'success' => false,
+                    'error' => 'All options are protected and cannot be deleted',
+                );
+            }
+
+            // Создаем бэкап если нужно
+            $backup_id = 0;
+            if ($create_backup) {
+                $backup_id = WPOM_Database::get_instance()->create_backup(
+                    'Prefix deletion: ' . $prefix,
+                    $options_data
+                );
+            }
+
+            // Удаляем опции
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options}
+                    WHERE option_name LIKE %s
+                    AND option_name NOT IN ('" . implode("','", array_map('esc_sql', $this->protected_options)) . "')",
+                    $pattern
+                )
+            );
+
+            // Оптимизируем таблицу
+            $wpdb->query("OPTIMIZE TABLE {$wpdb->options}");
+
+            // Логируем операцию
+            $log_id = WPOM_Database::get_instance()->log_operation(
+                'delete_prefix',
+                array(
+                    'prefix' => $prefix,
+                    'deleted' => $deleted_count,
+                    'protected' => $protected_count,
+                    'size_freed' => $total_size_freed,
+                    'backup_id' => $backup_id,
+                )
+            );
+
+            $wpdb->query('COMMIT');
+
+            return array(
+                'success' => true,
+                'deleted' => $deleted_count,
+                'protected' => $protected_count,
+                'size_freed' => $total_size_freed,
+                'size_freed_kb' => round($total_size_freed / 1024, 2),
+                'backup_id' => $backup_id,
+                'log_id' => $log_id,
+            );
+
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+
+            return array(
+                'success' => false,
+                'error' => $e->getMessage(),
+            );
+        }
+    }
+
+    /**
+     * Удалить одну опцию
+     *
+     * @param string $option_name Имя опции
+     * @param bool $create_backup Создавать ли бэкап
+     * @return array Результат операции
+     */
+    public function delete_single_option($option_name, $create_backup = true) {
+        global $wpdb;
+
+        try {
+            // Проверяем защищенные опции
+            if ($this->is_protected_option($option_name)) {
+                return array(
+                    'success' => false,
+                    'error' => 'This option is protected and cannot be deleted',
+                );
+            }
+
+            // Начинаем транзакцию
+            $wpdb->query('START TRANSACTION');
+
+            // Получаем значение опции
+            $option_value = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+                    $option_name
+                )
+            );
+
+            if ($option_value === null) {
+                $wpdb->query('ROLLBACK');
+                return array(
+                    'success' => false,
+                    'error' => 'Option not found',
+                );
+            }
+
+            $size_freed = strlen($option_value);
+
+            // Создаем бэкап если нужно
+            $backup_id = 0;
+            if ($create_backup) {
+                $backup_id = WPOM_Database::get_instance()->create_backup(
+                    'Single option deletion: ' . $option_name,
+                    array(
+                        array(
+                            'option_name' => $option_name,
+                            'option_value' => $option_value,
+                        ),
+                    )
+                );
+            }
+
+            // Удаляем опцию
+            $wpdb->delete(
+                $wpdb->options,
+                array('option_name' => $option_name),
+                array('%s')
+            );
+
+            // Оптимизируем таблицу
+            $wpdb->query("OPTIMIZE TABLE {$wpdb->options}");
+
+            // Логируем операцию
+            $log_id = WPOM_Database::get_instance()->log_operation(
+                'delete_single',
+                array(
+                    'option_name' => $option_name,
+                    'size_freed' => $size_freed,
+                    'backup_id' => $backup_id,
+                )
+            );
+
+            $wpdb->query('COMMIT');
+
+            return array(
+                'success' => true,
+                'option_name' => $option_name,
+                'size_freed' => $size_freed,
+                'size_freed_kb' => round($size_freed / 1024, 2),
+                'backup_id' => $backup_id,
+                'log_id' => $log_id,
+            );
+
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+
+            return array(
+                'success' => false,
+                'error' => $e->getMessage(),
+            );
+        }
+    }
 }
