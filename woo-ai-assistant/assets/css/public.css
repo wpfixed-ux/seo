@@ -249,7 +249,7 @@
     padding: 10px 12px;
     font-size: 14px;
     resize: none;
-    max-height: 25px;
+    max-height: 120px;
     outline: none;
     font-family: inherit;
 }
@@ -300,6 +300,27 @@
     color: white;
     border-color: #dc3232;
     animation: pulse 1s infinite;
+}
+
+.waa-chat-photo {
+    background: transparent;
+    color: var(--waa-primary);
+    border: 2px solid var(--waa-primary);
+    border-radius: var(--waa-radius);
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    transition: all 0.2s;
+    margin-right: 8px;
+}
+
+.waa-chat-photo:hover {
+    background: var(--waa-primary);
+    color: white;
+}
+
+.waa-chat-photo input[type="file"] {
+    display: none;
 }
 
 @keyframes pulse {

@@ -89,6 +89,8 @@
             var $input = $chat.find('.waa-chat-input');
             var $send = $chat.find('.waa-chat-send');
             var $voice = $chat.find('.waa-chat-voice');
+            var $photo = $chat.find('.waa-chat-photo');
+            var $photoInput = $photo.find('input[type="file"]');
             var $wrapper = $chat.closest('.waa-floating-wrapper');
             var sessionId = $wrapper.data('session') || $chat.data('session') || generateSessionId();
             var language = $wrapper.data('language') || $chat.data('language') || 'ru';
@@ -124,6 +126,29 @@
                     stopRecording();
                 } else {
                     startRecording();
+                }
+            });
+
+            // Photo button click
+            $photo.on('click', function() {
+                $photoInput.click();
+            });
+
+            // Photo file selected
+            $photoInput.on('change', function() {
+                var file = this.files[0];
+                if (file) {
+                    // Show preview message
+                    addMessage('📷 Фото: ' + file.name, 'user');
+
+                    // For now, just show a message that photo upload is coming soon
+                    // In future versions, this will send the photo to the AI
+                    setTimeout(function() {
+                        addMessage('Спасибо за фото! Функция анализа изображений будет доступна в следующей версии.', 'assistant');
+                    }, 500);
+
+                    // Clear the input
+                    $photoInput.val('');
                 }
             });
 
@@ -182,16 +207,8 @@
                 var $message = $('<div class="waa-message waa-message-' + type + '"></div>');
                 var $content = $('<div class="waa-message-content"></div>');
 
-                // Convert URLs to links only if there are no product cards
-                var linkedContent = content;
-                if (!products || products.length === 0) {
-                    linkedContent = content.replace(
-                        /(https?:\/\/[^\s]+)/g,
-                        '<a href="$1" target="_blank">$1</a>'
-                    );
-                }
-
-                $content.html(linkedContent);
+                // Don't convert URLs to links - show plain text only
+                $content.text(content);
                 $message.append($content);
 
                 // Add product cards
@@ -400,7 +417,7 @@
 
             function autoResize(textarea) {
                 textarea.style.height = 'auto';
-                textarea.style.height = Math.min(textarea.scrollHeight, 25) + 'px';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
             }
 
             function formatPrice(price) {

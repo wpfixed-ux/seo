@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce AI Sales Assistant
  * Plugin URI: https://example.com/woo-ai-assistant
  * Description: AI-powered sales assistant for WooCommerce with vector database for intelligent product recommendations
- * Version: 1.0.9
+ * Version: 1.1.0
  * Author: Developer
  * Author URI: https://example.com
  * License: GPL-2.0+
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('WAA_VERSION', '1.0.9');
+define('WAA_VERSION', '1.1.0');
 define('WAA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WAA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WAA_PLUGIN_BASENAME', plugin_basename(__FILE__));
