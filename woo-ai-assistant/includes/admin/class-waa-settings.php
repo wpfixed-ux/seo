@@ -45,6 +45,8 @@ class WAA_Settings {
         register_setting('waa_settings', 'waa_floating_button_position');
         register_setting('waa_settings', 'waa_auto_floating');
         register_setting('waa_settings', 'waa_chat_theme');
+        register_setting('waa_settings', 'waa_consultant_name');
+        register_setting('waa_settings', 'waa_consultant_photo');
 
         // Indexing Settings
         register_setting('waa_settings', 'waa_index_posts');
@@ -280,6 +282,38 @@ class WAA_Settings {
                     <!-- Display Tab -->
                     <div id="display" class="waa-tab-content">
                         <table class="form-table">
+                            <tr>
+                                <th><?php _e('Имя консультанта', 'woo-ai-assistant'); ?></th>
+                                <td>
+                                    <input type="text" name="waa_consultant_name"
+                                           value="<?php echo esc_attr(get_option('waa_consultant_name', 'AI Консультант')); ?>"
+                                           class="regular-text">
+                                    <p class="description"><?php _e('Отображается в заголовке чата', 'woo-ai-assistant'); ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><?php _e('Фото консультанта', 'woo-ai-assistant'); ?></th>
+                                <td>
+                                    <?php $consultant_photo = get_option('waa_consultant_photo', ''); ?>
+                                    <input type="text" name="waa_consultant_photo" id="waa_consultant_photo"
+                                           value="<?php echo esc_attr($consultant_photo); ?>"
+                                           class="regular-text">
+                                    <button type="button" class="button" id="waa_upload_photo_button">
+                                        <?php _e('Выбрать фото', 'woo-ai-assistant'); ?>
+                                    </button>
+                                    <?php if ($consultant_photo): ?>
+                                        <button type="button" class="button" id="waa_remove_photo_button">
+                                            <?php _e('Удалить', 'woo-ai-assistant'); ?>
+                                        </button>
+                                    <?php endif; ?>
+                                    <p class="description"><?php _e('Отображается в заголовке чата рядом с именем', 'woo-ai-assistant'); ?></p>
+                                    <?php if ($consultant_photo): ?>
+                                        <div id="waa_photo_preview" style="margin-top: 10px;">
+                                            <img src="<?php echo esc_url($consultant_photo); ?>" style="max-width: 100px; height: auto; border-radius: 50%;">
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
                             <tr>
                                 <th><?php _e('Позиция кнопки', 'woo-ai-assistant'); ?></th>
                                 <td>

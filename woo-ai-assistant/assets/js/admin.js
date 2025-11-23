@@ -260,12 +260,83 @@
         });
     }
 
+    // Media Uploader for Consultant Photo
+    function initMediaUploader() {
+        var $uploadBtn = $('#waa_upload_photo_button');
+        var $removeBtn = $('#waa_remove_photo_button');
+        var $photoInput = $('#waa_consultant_photo');
+        var $photoPreview = $('#waa_photo_preview');
+        var mediaUploader;
+
+        $uploadBtn.on('click', function(e) {
+            e.preventDefault();
+
+            // If the uploader object has already been created, reopen the dialog
+            if (mediaUploader) {
+                mediaUploader.open();
+                return;
+            }
+
+            // Extend the wp.media object
+            mediaUploader = wp.media({
+                title: 'Выберите фото консультанта',
+                button: {
+                    text: 'Использовать это фото'
+                },
+                multiple: false,
+                library: {
+                    type: 'image'
+                }
+            });
+
+            // When a file is selected, grab the URL and set it as the text field's value
+            mediaUploader.on('select', function() {
+                var attachment = mediaUploader.state().get('selection').first().toJSON();
+                $photoInput.val(attachment.url);
+
+                // Update preview
+                if ($photoPreview.length) {
+                    $photoPreview.find('img').attr('src', attachment.url);
+                } else {
+                    $photoInput.after('<div id="waa_photo_preview" style="margin-top: 10px;"><img src="' + attachment.url + '" style="max-width: 100px; height: auto; border-radius: 50%;"></div>');
+                }
+
+                // Show remove button if not visible
+                if (!$removeBtn.length) {
+                    $uploadBtn.after('<button type="button" class="button" id="waa_remove_photo_button" style="margin-left: 5px;">Удалить</button>');
+                    $removeBtn = $('#waa_remove_photo_button');
+                    bindRemoveButton();
+                } else {
+                    $removeBtn.show();
+                }
+            });
+
+            // Open the uploader dialog
+            mediaUploader.open();
+        });
+
+        function bindRemoveButton() {
+            $('#waa_remove_photo_button').on('click', function(e) {
+                e.preventDefault();
+                $photoInput.val('');
+                $photoPreview.remove();
+                $(this).hide();
+            });
+        }
+
+        // Bind remove button if it exists
+        if ($removeBtn.length) {
+            bindRemoveButton();
+        }
+    }
+
     // Initialize
     $(document).ready(function() {
         initTabs();
         initIndexing();
         initTestConnection();
         initApiLogs();
+        initMediaUploader();
     });
 
 })(jQuery);

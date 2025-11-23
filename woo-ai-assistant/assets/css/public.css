@@ -140,6 +140,15 @@
     color: white;
 }
 
+.waa-consultant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
 .waa-chat-title {
     font-weight: 600;
 }
@@ -240,7 +249,7 @@
     padding: 10px 12px;
     font-size: 14px;
     resize: none;
-    max-height: 100px;
+    max-height: 25px;
     outline: none;
     font-family: inherit;
 }

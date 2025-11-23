@@ -114,7 +114,7 @@ class WAA_Shortcodes {
      */
     public function render_chat($atts) {
         $atts = shortcode_atts(array(
-            'title' => __('AI Консультант', 'woo-ai-assistant'),
+            'title' => get_option('waa_consultant_name', __('AI Консультант', 'woo-ai-assistant')),
             'language' => $this->get_current_language(),
             'height' => '400',
             'class' => '',
@@ -123,6 +123,7 @@ class WAA_Shortcodes {
         $session_id = wp_generate_uuid4();
         $assistant = WAA_Assistant::get_instance();
         $welcome = $assistant->get_welcome_message($atts['language']);
+        $consultant_photo = get_option('waa_consultant_photo', '');
 
         ob_start();
         ?>
@@ -132,6 +133,9 @@ class WAA_Shortcodes {
              style="height: <?php echo esc_attr($atts['height']); ?>px;">
 
             <div class="waa-chat-header">
+                <?php if ($consultant_photo): ?>
+                    <img src="<?php echo esc_url($consultant_photo); ?>" alt="" class="waa-consultant-avatar">
+                <?php endif; ?>
                 <span class="waa-chat-title"><?php echo esc_html($atts['title']); ?></span>
                 <span class="waa-chat-status"></span>
             </div>
@@ -175,12 +179,13 @@ class WAA_Shortcodes {
         $atts = shortcode_atts(array(
             'position' => get_option('waa_floating_button_position', 'bottom-right'),
             'language' => $this->get_current_language(),
-            'title' => __('AI Консультант', 'woo-ai-assistant'),
+            'title' => get_option('waa_consultant_name', __('AI Консультант', 'woo-ai-assistant')),
         ), $atts);
 
         $session_id = wp_generate_uuid4();
         $assistant = WAA_Assistant::get_instance();
         $welcome = $assistant->get_welcome_message($atts['language']);
+        $consultant_photo = get_option('waa_consultant_photo', '');
 
         ob_start();
         ?>
@@ -201,6 +206,9 @@ class WAA_Shortcodes {
             <!-- Chat Window -->
             <div class="waa-floating-chat" style="display: none;">
                 <div class="waa-chat-header">
+                    <?php if ($consultant_photo): ?>
+                        <img src="<?php echo esc_url($consultant_photo); ?>" alt="" class="waa-consultant-avatar">
+                    <?php endif; ?>
                     <span class="waa-chat-title"><?php echo esc_html($atts['title']); ?></span>
                     <button class="waa-chat-close" aria-label="<?php esc_attr_e('Закрыть', 'woo-ai-assistant'); ?>">
                         <svg viewBox="0 0 24 24" width="20" height="20">

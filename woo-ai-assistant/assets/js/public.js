@@ -154,7 +154,7 @@
                     data: JSON.stringify({
                         message: message,
                         session_id: sessionId,
-                        language: 'auto'
+                        language: language
                     }),
                     success: function(response) {
                         $typing.remove();
@@ -182,11 +182,14 @@
                 var $message = $('<div class="waa-message waa-message-' + type + '"></div>');
                 var $content = $('<div class="waa-message-content"></div>');
 
-                // Convert URLs to links
-                var linkedContent = content.replace(
-                    /(https?:\/\/[^\s]+)/g,
-                    '<a href="$1" target="_blank">$1</a>'
-                );
+                // Convert URLs to links only if there are no product cards
+                var linkedContent = content;
+                if (!products || products.length === 0) {
+                    linkedContent = content.replace(
+                        /(https?:\/\/[^\s]+)/g,
+                        '<a href="$1" target="_blank">$1</a>'
+                    );
+                }
 
                 $content.html(linkedContent);
                 $message.append($content);
@@ -397,7 +400,7 @@
 
             function autoResize(textarea) {
                 textarea.style.height = 'auto';
-                textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+                textarea.style.height = Math.min(textarea.scrollHeight, 25) + 'px';
             }
 
             function formatPrice(price) {
