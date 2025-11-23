@@ -78,18 +78,21 @@ class WAA_Core {
     }
 
     public function enqueue_public_assets() {
+        $css_file = WAA_PLUGIN_DIR . 'assets/css/public.css';
+        $js_file = WAA_PLUGIN_DIR . 'assets/js/public.js';
+
         wp_enqueue_style(
             'waa-public',
             WAA_PLUGIN_URL . 'assets/css/public.css',
             array(),
-            WAA_VERSION
+            file_exists($css_file) ? filemtime($css_file) : WAA_VERSION
         );
 
         wp_enqueue_script(
             'waa-public',
             WAA_PLUGIN_URL . 'assets/js/public.js',
             array('jquery'),
-            WAA_VERSION,
+            file_exists($js_file) ? filemtime($js_file) : WAA_VERSION,
             true
         );
 
@@ -120,18 +123,21 @@ class WAA_Core {
             return;
         }
 
+        $css_file = WAA_PLUGIN_DIR . 'assets/css/admin.css';
+        $js_file = WAA_PLUGIN_DIR . 'assets/js/admin.js';
+
         wp_enqueue_style(
             'waa-admin',
             WAA_PLUGIN_URL . 'assets/css/admin.css',
             array(),
-            WAA_VERSION
+            file_exists($css_file) ? filemtime($css_file) : WAA_VERSION
         );
 
         wp_enqueue_script(
             'waa-admin',
             WAA_PLUGIN_URL . 'assets/js/admin.js',
             array('jquery'),
-            WAA_VERSION,
+            file_exists($js_file) ? filemtime($js_file) : WAA_VERSION,
             true
         );
 
