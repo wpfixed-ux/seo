@@ -417,7 +417,7 @@
 
             function autoResize(textarea) {
                 textarea.style.height = 'auto';
-                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+                textarea.style.height = Math.min(textarea.scrollHeight, 480) + 'px';
             }
 
             function formatPrice(price) {

@@ -132,10 +132,8 @@ class WAA_OpenAI extends WAA_API_Base {
         $body .= "Content-Disposition: form-data; name=\"model\"\r\n\r\n";
         $body .= "{$model}\r\n";
 
-        // Add language field (optional, let Whisper auto-detect)
-        $body .= "--{$boundary}\r\n";
-        $body .= "Content-Disposition: form-data; name=\"language\"\r\n\r\n";
-        $body .= "auto\r\n";
+        // Don't specify language - let Whisper auto-detect it
+        // (Whisper supports ru, uk, en and many others)
 
         $body .= "--{$boundary}--\r\n";
 
