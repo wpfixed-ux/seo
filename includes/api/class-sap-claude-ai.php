@@ -326,6 +326,17 @@ class SAP_Claude_AI {
     }
 
     /**
+     * Generate content from specification
+     *
+     * @param string $prompt The generation prompt
+     * @param array $options Additional options
+     * @return string|WP_Error Generated content or error
+     */
+    public function generate_content($prompt, $options = array()) {
+        return $this->send_request($prompt, $options);
+    }
+
+    /**
      * Send request to Claude AI API
      *
      * @param string $prompt The prompt to send

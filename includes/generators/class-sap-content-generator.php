@@ -12,17 +12,40 @@
 class SAP_Content_Generator {
 
     /**
-     * Claude AI instance
+     * AI instance (Claude or OpenAI)
      *
-     * @var SAP_Claude_AI
+     * @var SAP_Claude_AI|SAP_OpenAI
      */
-    private $claude;
+    private $ai;
+
+    /**
+     * AI provider name
+     *
+     * @var string
+     */
+    private $ai_provider;
 
     /**
      * Constructor
      */
     public function __construct() {
-        $this->claude = new SAP_Claude_AI();
+        $settings = get_option('sap_settings', array());
+        $this->ai_provider = $settings['ai_provider'] ?? 'claude';
+
+        if ($this->ai_provider === 'openai') {
+            $this->ai = new SAP_OpenAI();
+        } else {
+            $this->ai = new SAP_Claude_AI();
+        }
+    }
+
+    /**
+     * Get AI instance
+     *
+     * @return SAP_Claude_AI|SAP_OpenAI
+     */
+    private function get_ai() {
+        return $this->ai;
     }
 
     /**
@@ -445,56 +468,16 @@ class SAP_Content_Generator {
     }
 
     /**
-     * Call Claude AI API
+     * Call AI API (Claude or OpenAI)
      */
     private function call_claude($prompt, $options = array()) {
-        if (!$this->claude->is_configured()) {
-            return new WP_Error('no_api_key', __('Claude AI API key not configured', 'seo-analytics-pro'));
+        if (!$this->ai->is_configured()) {
+            $provider_name = $this->ai_provider === 'openai' ? 'OpenAI' : 'Claude AI';
+            return new WP_Error('no_api_key', sprintf(__('%s API key not configured', 'seo-analytics-pro'), $provider_name));
         }
 
-        // Implementation would call the Claude API
-        // This is a placeholder - actual implementation in SAP_Claude_AI class
-
-        $api_endpoint = 'https://api.anthropic.com/v1/messages';
-        $settings = get_option('sap_settings', array());
-        $api_key = $settings['claude_ai_api_key'] ?? '';
-
-        $body = array(
-            'model' => 'claude-sonnet-4-5-20250929',
-            'max_tokens' => $options['max_tokens'] ?? 4096,
-            'system' => $options['system'] ?? '',
-            'messages' => array(
-                array(
-                    'role' => 'user',
-                    'content' => $prompt
-                )
-            )
-        );
-
-        $response = wp_remote_post($api_endpoint, array(
-            'headers' => array(
-                'Content-Type' => 'application/json',
-                'x-api-key' => $api_key,
-                'anthropic-version' => '2023-06-01'
-            ),
-            'body' => wp_json_encode($body),
-            'timeout' => 120
-        ));
-
-        if (is_wp_error($response)) {
-            return $response;
-        }
-
-        $status_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        $data = json_decode($response_body, true);
-
-        if ($status_code !== 200) {
-            $error_message = $data['error']['message'] ?? 'Unknown error';
-            return new WP_Error('api_error', $error_message);
-        }
-
-        return $data['content'][0]['text'] ?? '';
+        // Call the AI API using generate_content method
+        return $this->ai->generate_content($prompt, $options);
     }
 
     /**

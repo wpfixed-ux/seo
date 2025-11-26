@@ -123,10 +123,24 @@ class SAP_Admin {
     public function sanitize_settings($input) {
         $sanitized = array();
 
+        // AI Provider settings
+        if (isset($input['ai_provider'])) {
+            $sanitized['ai_provider'] = sanitize_text_field($input['ai_provider']);
+        }
+
         if (isset($input['claude_ai_api_key'])) {
             $sanitized['claude_ai_api_key'] = sanitize_text_field($input['claude_ai_api_key']);
         }
 
+        if (isset($input['openai_api_key'])) {
+            $sanitized['openai_api_key'] = sanitize_text_field($input['openai_api_key']);
+        }
+
+        if (isset($input['openai_model'])) {
+            $sanitized['openai_model'] = sanitize_text_field($input['openai_model']);
+        }
+
+        // SERP API settings
         if (isset($input['serp_api_key'])) {
             $sanitized['serp_api_key'] = sanitize_text_field($input['serp_api_key']);
         }
@@ -163,13 +177,14 @@ class SAP_Admin {
      */
     public function display_plugin_admin_page() {
         $settings = get_option('sap_settings', array());
-        $has_claude_key = !empty($settings['claude_ai_api_key']);
+        $ai_provider = $settings['ai_provider'] ?? 'claude';
+        $has_ai_key = ($ai_provider === 'openai') ? !empty($settings['openai_api_key']) : !empty($settings['claude_ai_api_key']);
         $has_serp_key = !empty($settings['serp_api_key']);
         ?>
         <div class="wrap sap-wrap">
             <h1><?php _e('SEO Analytics Pro', 'seo-analytics-pro'); ?></h1>
 
-            <?php if (!$has_claude_key || !$has_serp_key): ?>
+            <?php if (!$has_ai_key || !$has_serp_key): ?>
             <div class="notice notice-warning">
                 <p>
                     <strong><?php _e('Setup Required:', 'seo-analytics-pro'); ?></strong>
@@ -203,8 +218,8 @@ class SAP_Admin {
                     <div class="sap-card">
                         <h3><?php _e('API Status', 'seo-analytics-pro'); ?></h3>
                         <div class="sap-status">
-                            <span class="<?php echo $has_claude_key ? 'status-ok' : 'status-error'; ?>">
-                                Claude AI: <?php echo $has_claude_key ? '✓' : '✗'; ?>
+                            <span class="<?php echo $has_ai_key ? 'status-ok' : 'status-error'; ?>">
+                                <?php echo ($ai_provider === 'openai' ? 'OpenAI' : 'Claude AI'); ?>: <?php echo $has_ai_key ? '✓' : '✗'; ?>
                             </span>
                             <span class="<?php echo $has_serp_key ? 'status-ok' : 'status-error'; ?>">
                                 SERP API: <?php echo $has_serp_key ? '✓' : '✗'; ?>
@@ -225,7 +240,7 @@ class SAP_Admin {
                             <label for="quick-website"><?php _e('Your Website', 'seo-analytics-pro'); ?></label>
                             <input type="url" id="quick-website" name="website" placeholder="https://yourwebsite.com">
                         </div>
-                        <button type="submit" class="button button-primary" <?php echo (!$has_claude_key || !$has_serp_key) ? 'disabled' : ''; ?>>
+                        <button type="submit" class="button button-primary" <?php echo (!$has_ai_key || !$has_serp_key) ? 'disabled' : ''; ?>>
                             <?php _e('Analyze Keyword', 'seo-analytics-pro'); ?>
                         </button>
                     </form>
@@ -466,8 +481,17 @@ keyword 3"></textarea>
                     <p class="description"><?php _e('Enter your API keys to enable SEO analysis features.', 'seo-analytics-pro'); ?></p>
 
                     <div class="sap-form-row">
+                        <label for="ai-provider"><?php _e('AI Provider', 'seo-analytics-pro'); ?></label>
+                        <select id="ai-provider" name="sap_settings[ai_provider]">
+                            <option value="claude" <?php selected($settings['ai_provider'] ?? 'claude', 'claude'); ?>>Claude AI (Anthropic)</option>
+                            <option value="openai" <?php selected($settings['ai_provider'] ?? '', 'openai'); ?>>OpenAI (GPT-4)</option>
+                        </select>
+                        <p class="description"><?php _e('Choose your AI provider for content generation and analysis.', 'seo-analytics-pro'); ?></p>
+                    </div>
+
+                    <div class="sap-form-row sap-ai-claude">
                         <label for="claude-api-key">
-                            <?php _e('Claude AI API Key', 'seo-analytics-pro'); ?> *
+                            <?php _e('Claude AI API Key', 'seo-analytics-pro'); ?>
                             <span class="sap-help">
                                 <a href="https://console.anthropic.com/" target="_blank"><?php _e('Get API Key', 'seo-analytics-pro'); ?></a>
                             </span>
@@ -480,27 +504,61 @@ keyword 3"></textarea>
                         <p class="description"><?php _e('Required for AI-powered analysis and content strategy generation.', 'seo-analytics-pro'); ?></p>
                     </div>
 
+                    <div class="sap-form-row sap-ai-openai" style="display:none;">
+                        <label for="openai-api-key">
+                            <?php _e('OpenAI API Key', 'seo-analytics-pro'); ?>
+                            <span class="sap-help">
+                                <a href="https://platform.openai.com/api-keys" target="_blank"><?php _e('Get API Key', 'seo-analytics-pro'); ?></a>
+                            </span>
+                        </label>
+                        <input type="password"
+                               id="openai-api-key"
+                               name="sap_settings[openai_api_key]"
+                               value="<?php echo esc_attr($settings['openai_api_key'] ?? ''); ?>"
+                               class="regular-text">
+                        <p class="description"><?php _e('Alternative AI provider for content generation and analysis.', 'seo-analytics-pro'); ?></p>
+                    </div>
+
+                    <div class="sap-form-row sap-ai-openai" style="display:none;">
+                        <label for="openai-model"><?php _e('OpenAI Model', 'seo-analytics-pro'); ?></label>
+                        <select id="openai-model" name="sap_settings[openai_model]">
+                            <option value="gpt-4o" <?php selected($settings['openai_model'] ?? 'gpt-4o', 'gpt-4o'); ?>>GPT-4o (Recommended)</option>
+                            <option value="gpt-4-turbo" <?php selected($settings['openai_model'] ?? '', 'gpt-4-turbo'); ?>>GPT-4 Turbo</option>
+                            <option value="gpt-4" <?php selected($settings['openai_model'] ?? '', 'gpt-4'); ?>>GPT-4</option>
+                            <option value="gpt-3.5-turbo" <?php selected($settings['openai_model'] ?? '', 'gpt-3.5-turbo'); ?>>GPT-3.5 Turbo (Cheaper)</option>
+                        </select>
+                        <p class="description"><?php _e('Select the OpenAI model to use. GPT-4o offers the best quality.', 'seo-analytics-pro'); ?></p>
+                    </div>
+
                     <div class="sap-form-row">
                         <label for="serp-api-provider"><?php _e('SERP API Provider', 'seo-analytics-pro'); ?></label>
                         <select id="serp-api-provider" name="sap_settings[serp_api_provider]">
                             <option value="serpapi" <?php selected($settings['serp_api_provider'] ?? '', 'serpapi'); ?>>SERPApi</option>
                             <option value="dataforseo" <?php selected($settings['serp_api_provider'] ?? '', 'dataforseo'); ?>>DataForSEO</option>
+                            <option value="hasdata" <?php selected($settings['serp_api_provider'] ?? '', 'hasdata'); ?>>HasData (Free Plan Available)</option>
                         </select>
+                        <p class="description">
+                            <?php _e('Choose your SERP API provider.', 'seo-analytics-pro'); ?>
+                            <a href="https://hasdata.com/prices" target="_blank"><?php _e('HasData has a free plan for testing', 'seo-analytics-pro'); ?></a>
+                        </p>
                     </div>
 
                     <div class="sap-form-row">
                         <label for="serp-api-key">
                             <?php _e('SERP API Key', 'seo-analytics-pro'); ?> *
-                            <span class="sap-help">
-                                <a href="https://serpapi.com/" target="_blank"><?php _e('Get API Key', 'seo-analytics-pro'); ?></a>
-                            </span>
                         </label>
                         <input type="password"
                                id="serp-api-key"
                                name="sap_settings[serp_api_key]"
                                value="<?php echo esc_attr($settings['serp_api_key'] ?? ''); ?>"
                                class="regular-text">
-                        <p class="description"><?php _e('Required for fetching search engine results.', 'seo-analytics-pro'); ?></p>
+                        <p class="description">
+                            <?php _e('Required for fetching search engine results.', 'seo-analytics-pro'); ?>
+                            <?php _e('Get API key:', 'seo-analytics-pro'); ?>
+                            <a href="https://serpapi.com/" target="_blank">SERPApi</a> |
+                            <a href="https://dataforseo.com/" target="_blank">DataForSEO</a> |
+                            <a href="https://hasdata.com/" target="_blank">HasData</a>
+                        </p>
                     </div>
                 </div>
 
@@ -594,6 +652,28 @@ keyword 3"></textarea>
 
             <div id="api-test-results" class="sap-results" style="display:none;"></div>
         </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Toggle AI provider fields
+            function toggleAIProvider() {
+                var provider = $('#ai-provider').val();
+                if (provider === 'openai') {
+                    $('.sap-ai-claude').hide();
+                    $('.sap-ai-openai').show();
+                } else {
+                    $('.sap-ai-claude').show();
+                    $('.sap-ai-openai').hide();
+                }
+            }
+
+            // Initialize on page load
+            toggleAIProvider();
+
+            // Toggle on change
+            $('#ai-provider').on('change', toggleAIProvider);
+        });
+        </script>
         <?php
     }
 
