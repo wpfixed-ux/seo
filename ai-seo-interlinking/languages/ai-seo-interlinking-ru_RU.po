@@ -1,0 +1,372 @@
+# Copyright (C) 2024 AI SEO Interlinking
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: AI SEO Interlinking 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/your-repo/ai-seo-interlinking\n"
+"POT-Creation-Date: 2024-11-20 12:00+0000\n"
+"PO-Revision-Date: 2024-11-20 12:00+0000\n"
+"Last-Translator: Your Name <email@example.com>\n"
+"Language-Team: Russian\n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+
+msgid "AI SEO Interlinking"
+msgstr "AI SEO Перелинковка"
+
+msgid "AI SEO Interlinking requires WooCommerce to be installed and active."
+msgstr "AI SEO Интерлинкинг требует установленный и активный WooCommerce."
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "AI Interlinking"
+msgstr "AI Перелинковка"
+
+msgid "Reports"
+msgstr "Отчеты"
+
+msgid "Logs"
+msgstr "Журнал"
+
+msgid "Testing connection..."
+msgstr "Тестирование соединения..."
+
+msgid "Success!"
+msgstr "Успешно!"
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "Processing..."
+msgstr "Обработка..."
+
+msgid "Are you sure?"
+msgstr "Вы уверены?"
+
+msgid "Permission denied"
+msgstr "Доступ запрещен"
+
+msgid "API key is required"
+msgstr "Требуется API ключ"
+
+msgid "Invalid post ID"
+msgstr "Неверный ID записи"
+
+msgid "Post not found"
+msgstr "Запись не найдена"
+
+msgid "Settings saved"
+msgstr "Настройки сохранены"
+
+msgid "AI SEO Interlinking Settings"
+msgstr "Настройки AI SEO Перелинковки"
+
+msgid "API Settings"
+msgstr "Настройки API"
+
+msgid "Linking Strategy"
+msgstr "Стратегия перелинковки"
+
+msgid "Keywords"
+msgstr "Ключевые слова"
+
+msgid "Scheduler"
+msgstr "Планировщик"
+
+msgid "Advanced"
+msgstr "Дополнительно"
+
+msgid "Languages"
+msgstr "Языки"
+
+msgid "OpenAI API Configuration"
+msgstr "Настройка OpenAI API"
+
+msgid "API Key"
+msgstr "API Ключ"
+
+msgid "Enter your OpenAI API key. Get one at"
+msgstr "Введите ваш OpenAI API ключ. Получить можно на"
+
+msgid "Test Connection"
+msgstr "Тест соединения"
+
+msgid "Model"
+msgstr "Модель"
+
+msgid "Max Tokens"
+msgstr "Макс. токенов"
+
+msgid "Maximum tokens per API request"
+msgstr "Максимум токенов на один API запрос"
+
+msgid "Internal Linking Strategy"
+msgstr "Стратегия внутренней перелинковки"
+
+msgid "Strategy"
+msgstr "Стратегия"
+
+msgid "Pyramid (Homepage → Categories → Products)"
+msgstr "Пирамида (Главная → Категории → Товары)"
+
+msgid "Circular (Same Level Pages)"
+msgstr "Кольцевая (Страницы одного уровня)"
+
+msgid "Thematic Clusters (Semantic Relevance)"
+msgstr "Тематические кластеры (Семантическая релевантность)"
+
+msgid "Hub (Pillar + Supporting)"
+msgstr "Хабовая (Основные + Поддерживающие)"
+
+msgid "AI Automatic"
+msgstr "AI Автоматический"
+
+msgid "Max Outbound Links"
+msgstr "Макс. исходящих ссылок"
+
+msgid "Max Inbound Links"
+msgstr "Макс. входящих ссылок"
+
+msgid "Min Content Length (words)"
+msgstr "Мин. длина контента (слов)"
+
+msgid "Keyword Management"
+msgstr "Управление ключевыми словами"
+
+msgid "AI Prompt Template"
+msgstr "Шаблон AI промпта"
+
+msgid "Available variables: {post_title}, {post_content}, {category}, {language}"
+msgstr "Доступные переменные: {post_title}, {post_content}, {category}, {language}"
+
+msgid "Generate Keywords for All Posts"
+msgstr "Сгенерировать ключевые слова для всех записей"
+
+msgid "Batch Processing Scheduler"
+msgstr "Планировщик пакетной обработки"
+
+msgid "Enable Scheduler"
+msgstr "Включить планировщик"
+
+msgid "Run automated batch processing"
+msgstr "Запускать автоматическую пакетную обработку"
+
+msgid "Frequency"
+msgstr "Частота"
+
+msgid "Daily"
+msgstr "Ежедневно"
+
+msgid "Weekly"
+msgstr "Еженедельно"
+
+msgid "Monthly"
+msgstr "Ежемесячно"
+
+msgid "Time"
+msgstr "Время"
+
+msgid "Batch Size"
+msgstr "Размер пакета"
+
+msgid "Number of posts to process per batch"
+msgstr "Количество записей для обработки в одном пакете"
+
+msgid "Next Scheduled Run"
+msgstr "Следующий запуск"
+
+msgid "Not scheduled"
+msgstr "Не запланировано"
+
+msgid "Manual Processing"
+msgstr "Ручная обработка"
+
+msgid "Process Batch Now"
+msgstr "Обработать пакет сейчас"
+
+msgid "Advanced Settings"
+msgstr "Дополнительные настройки"
+
+msgid "Enable Logging"
+msgstr "Включить журналирование"
+
+msgid "Log all operations and API requests"
+msgstr "Записывать все операции и API запросы"
+
+msgid "Log Retention (days)"
+msgstr "Хранение логов (дней)"
+
+msgid "Auto Process on Save"
+msgstr "Авто-обработка при сохранении"
+
+msgid "Automatically process posts when saved"
+msgstr "Автоматически обрабатывать записи при сохранении"
+
+msgid "Active Languages for Processing"
+msgstr "Активные языки для обработки"
+
+msgid "Select which languages to process"
+msgstr "Выберите языки для обработки"
+
+msgid "Default Language"
+msgstr "Язык по умолчанию"
+
+msgid "AI SEO Interlinking Reports"
+msgstr "Отчеты AI SEO Перелинковки"
+
+msgid "Total Links Created"
+msgstr "Всего ссылок создано"
+
+msgid "Last 30 days"
+msgstr "За последние 30 дней"
+
+msgid "API Calls"
+msgstr "API вызовов"
+
+msgid "Tokens Used"
+msgstr "Использовано токенов"
+
+msgid "Estimated Cost"
+msgstr "Примерная стоимость"
+
+msgid "Statistics by Language"
+msgstr "Статистика по языкам"
+
+msgid "Language"
+msgstr "Язык"
+
+msgid "Links"
+msgstr "Ссылок"
+
+msgid "Operations Summary"
+msgstr "Сводка операций"
+
+msgid "Operation Type"
+msgstr "Тип операции"
+
+msgid "Count"
+msgstr "Количество"
+
+msgid "Tokens"
+msgstr "Токенов"
+
+msgid "Cost"
+msgstr "Стоимость"
+
+msgid "Errors"
+msgstr "Ошибок"
+
+msgid "Top Pages by Inbound Links"
+msgstr "Топ страниц по входящим ссылкам"
+
+msgid "Page"
+msgstr "Страница"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Inbound Links"
+msgstr "Входящих ссылок"
+
+msgid "Actions"
+msgstr "Действия"
+
+msgid "View"
+msgstr "Просмотр"
+
+msgid "Edit"
+msgstr "Редактировать"
+
+msgid "Top Pages by Outbound Links"
+msgstr "Топ страниц по исходящим ссылкам"
+
+msgid "Outbound Links"
+msgstr "Исходящих ссылок"
+
+msgid "Orphan Pages (No Inbound Links)"
+msgstr "Страницы-сироты (Без входящих ссылок)"
+
+msgid "Found %d pages without inbound links"
+msgstr "Найдено %d страниц без входящих ссылок"
+
+msgid "Refresh Statistics"
+msgstr "Обновить статистику"
+
+msgid "AI SEO Interlinking Logs"
+msgstr "Журнал AI SEO Перелинковки"
+
+msgid "All Operations"
+msgstr "Все операции"
+
+msgid "API Requests"
+msgstr "API запросы"
+
+msgid "Build Links"
+msgstr "Создание ссылок"
+
+msgid "Batch Processing"
+msgstr "Пакетная обработка"
+
+msgid "All Statuses"
+msgstr "Все статусы"
+
+msgid "Success"
+msgstr "Успешно"
+
+msgid "Filter"
+msgstr "Фильтр"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Operation"
+msgstr "Операция"
+
+msgid "Details"
+msgstr "Детали"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "No logs found"
+msgstr "Логи не найдены"
+
+msgid "View Details"
+msgstr "Показать детали"
+
+msgid "Clear All Logs"
+msgstr "Очистить все логи"
+
+msgid "Warning: This action cannot be undone!"
+msgstr "Внимание: Это действие нельзя отменить!"
+
+msgid "Are you sure you want to clear all logs? This cannot be undone!"
+msgstr "Вы уверены, что хотите очистить все логи? Это действие нельзя отменить!"
+
+msgid "Post not found or not published"
+msgstr "Запись не найдена или не опубликована"
+
+msgid "Post is excluded from interlinking"
+msgstr "Запись исключена из перелинковки"
+
+msgid "Content is too short for interlinking"
+msgstr "Контент слишком короткий для перелинковки"
+
+msgid "No suitable target posts found"
+msgstr "Не найдено подходящих целевых записей"
+
+msgid "API key is not set"
+msgstr "API ключ не установлен"
+
+msgid "Connection successful!"
+msgstr "Соединение успешно!"
+
+msgid "API key is not configured"
+msgstr "API ключ не настроен"

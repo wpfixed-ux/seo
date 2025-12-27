@@ -1,0 +1,372 @@
+# Copyright (C) 2024 AI SEO Interlinking
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: AI SEO Interlinking 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/your-repo/ai-seo-interlinking\n"
+"POT-Creation-Date: 2024-11-20 12:00+0000\n"
+"PO-Revision-Date: 2024-11-20 12:00+0000\n"
+"Last-Translator: Your Name <email@example.com>\n"
+"Language-Team: German\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "AI SEO Interlinking"
+msgstr "AI SEO Interlinking"
+
+msgid "AI SEO Interlinking requires WooCommerce to be installed and active."
+msgstr "AI SEO Interlinking erfordert die Installation und Aktivierung von WooCommerce."
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "AI Interlinking"
+msgstr "AI Interlinking"
+
+msgid "Reports"
+msgstr "Berichte"
+
+msgid "Logs"
+msgstr "Protokolle"
+
+msgid "Testing connection..."
+msgstr "Verbindung wird getestet..."
+
+msgid "Success!"
+msgstr "Erfolgreich!"
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "Processing..."
+msgstr "Verarbeitung läuft..."
+
+msgid "Are you sure?"
+msgstr "Sind Sie sicher?"
+
+msgid "Permission denied"
+msgstr "Zugriff verweigert"
+
+msgid "API key is required"
+msgstr "API-Schlüssel erforderlich"
+
+msgid "Invalid post ID"
+msgstr "Ungültige Beitrags-ID"
+
+msgid "Post not found"
+msgstr "Beitrag nicht gefunden"
+
+msgid "Settings saved"
+msgstr "Einstellungen gespeichert"
+
+msgid "AI SEO Interlinking Settings"
+msgstr "AI SEO Interlinking Einstellungen"
+
+msgid "API Settings"
+msgstr "API-Einstellungen"
+
+msgid "Linking Strategy"
+msgstr "Verlinkungsstrategie"
+
+msgid "Keywords"
+msgstr "Schlüsselwörter"
+
+msgid "Scheduler"
+msgstr "Planer"
+
+msgid "Advanced"
+msgstr "Erweitert"
+
+msgid "Languages"
+msgstr "Sprachen"
+
+msgid "OpenAI API Configuration"
+msgstr "OpenAI API-Konfiguration"
+
+msgid "API Key"
+msgstr "API-Schlüssel"
+
+msgid "Enter your OpenAI API key. Get one at"
+msgstr "Geben Sie Ihren OpenAI API-Schlüssel ein. Erhalten Sie einen unter"
+
+msgid "Test Connection"
+msgstr "Verbindung testen"
+
+msgid "Model"
+msgstr "Modell"
+
+msgid "Max Tokens"
+msgstr "Max. Tokens"
+
+msgid "Maximum tokens per API request"
+msgstr "Maximale Tokens pro API-Anfrage"
+
+msgid "Internal Linking Strategy"
+msgstr "Interne Verlinkungsstrategie"
+
+msgid "Strategy"
+msgstr "Strategie"
+
+msgid "Pyramid (Homepage → Categories → Products)"
+msgstr "Pyramide (Startseite → Kategorien → Produkte)"
+
+msgid "Circular (Same Level Pages)"
+msgstr "Kreisförmig (Seiten derselben Ebene)"
+
+msgid "Thematic Clusters (Semantic Relevance)"
+msgstr "Thematische Cluster (Semantische Relevanz)"
+
+msgid "Hub (Pillar + Supporting)"
+msgstr "Hub (Haupt + Unterstützend)"
+
+msgid "AI Automatic"
+msgstr "KI Automatisch"
+
+msgid "Max Outbound Links"
+msgstr "Max. ausgehende Links"
+
+msgid "Max Inbound Links"
+msgstr "Max. eingehende Links"
+
+msgid "Min Content Length (words)"
+msgstr "Min. Inhaltslänge (Wörter)"
+
+msgid "Keyword Management"
+msgstr "Schlüsselwortverwaltung"
+
+msgid "AI Prompt Template"
+msgstr "KI Prompt-Vorlage"
+
+msgid "Available variables: {post_title}, {post_content}, {category}, {language}"
+msgstr "Verfügbare Variablen: {post_title}, {post_content}, {category}, {language}"
+
+msgid "Generate Keywords for All Posts"
+msgstr "Schlüsselwörter für alle Beiträge generieren"
+
+msgid "Batch Processing Scheduler"
+msgstr "Stapelverarbeitungsplaner"
+
+msgid "Enable Scheduler"
+msgstr "Planer aktivieren"
+
+msgid "Run automated batch processing"
+msgstr "Automatische Stapelverarbeitung ausführen"
+
+msgid "Frequency"
+msgstr "Häufigkeit"
+
+msgid "Daily"
+msgstr "Täglich"
+
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+msgid "Monthly"
+msgstr "Monatlich"
+
+msgid "Time"
+msgstr "Zeit"
+
+msgid "Batch Size"
+msgstr "Stapelgröße"
+
+msgid "Number of posts to process per batch"
+msgstr "Anzahl der Beiträge pro Stapel"
+
+msgid "Next Scheduled Run"
+msgstr "Nächster geplanter Lauf"
+
+msgid "Not scheduled"
+msgstr "Nicht geplant"
+
+msgid "Manual Processing"
+msgstr "Manuelle Verarbeitung"
+
+msgid "Process Batch Now"
+msgstr "Stapel jetzt verarbeiten"
+
+msgid "Advanced Settings"
+msgstr "Erweiterte Einstellungen"
+
+msgid "Enable Logging"
+msgstr "Protokollierung aktivieren"
+
+msgid "Log all operations and API requests"
+msgstr "Alle Operationen und API-Anfragen protokollieren"
+
+msgid "Log Retention (days)"
+msgstr "Protokollaufbewahrung (Tage)"
+
+msgid "Auto Process on Save"
+msgstr "Automatische Verarbeitung beim Speichern"
+
+msgid "Automatically process posts when saved"
+msgstr "Beiträge beim Speichern automatisch verarbeiten"
+
+msgid "Active Languages for Processing"
+msgstr "Aktive Sprachen für die Verarbeitung"
+
+msgid "Select which languages to process"
+msgstr "Wählen Sie die zu verarbeitenden Sprachen"
+
+msgid "Default Language"
+msgstr "Standardsprache"
+
+msgid "AI SEO Interlinking Reports"
+msgstr "AI SEO Interlinking Berichte"
+
+msgid "Total Links Created"
+msgstr "Gesamtzahl erstellter Links"
+
+msgid "Last 30 days"
+msgstr "Letzte 30 Tage"
+
+msgid "API Calls"
+msgstr "API-Aufrufe"
+
+msgid "Tokens Used"
+msgstr "Verwendete Tokens"
+
+msgid "Estimated Cost"
+msgstr "Geschätzte Kosten"
+
+msgid "Statistics by Language"
+msgstr "Statistiken nach Sprache"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Links"
+msgstr "Links"
+
+msgid "Operations Summary"
+msgstr "Operationszusammenfassung"
+
+msgid "Operation Type"
+msgstr "Operationstyp"
+
+msgid "Count"
+msgstr "Anzahl"
+
+msgid "Tokens"
+msgstr "Tokens"
+
+msgid "Cost"
+msgstr "Kosten"
+
+msgid "Errors"
+msgstr "Fehler"
+
+msgid "Top Pages by Inbound Links"
+msgstr "Top-Seiten nach eingehenden Links"
+
+msgid "Page"
+msgstr "Seite"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Inbound Links"
+msgstr "Eingehende Links"
+
+msgid "Actions"
+msgstr "Aktionen"
+
+msgid "View"
+msgstr "Ansehen"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Top Pages by Outbound Links"
+msgstr "Top-Seiten nach ausgehenden Links"
+
+msgid "Outbound Links"
+msgstr "Ausgehende Links"
+
+msgid "Orphan Pages (No Inbound Links)"
+msgstr "Verwaiste Seiten (Keine eingehenden Links)"
+
+msgid "Found %d pages without inbound links"
+msgstr "%d Seiten ohne eingehende Links gefunden"
+
+msgid "Refresh Statistics"
+msgstr "Statistiken aktualisieren"
+
+msgid "AI SEO Interlinking Logs"
+msgstr "AI SEO Interlinking Protokolle"
+
+msgid "All Operations"
+msgstr "Alle Operationen"
+
+msgid "API Requests"
+msgstr "API-Anfragen"
+
+msgid "Build Links"
+msgstr "Links erstellen"
+
+msgid "Batch Processing"
+msgstr "Stapelverarbeitung"
+
+msgid "All Statuses"
+msgstr "Alle Status"
+
+msgid "Success"
+msgstr "Erfolg"
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Operation"
+msgstr "Operation"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "No logs found"
+msgstr "Keine Protokolle gefunden"
+
+msgid "View Details"
+msgstr "Details anzeigen"
+
+msgid "Clear All Logs"
+msgstr "Alle Protokolle löschen"
+
+msgid "Warning: This action cannot be undone!"
+msgstr "Warnung: Diese Aktion kann nicht rückgängig gemacht werden!"
+
+msgid "Are you sure you want to clear all logs? This cannot be undone!"
+msgstr "Sind Sie sicher, dass Sie alle Protokolle löschen möchten? Dies kann nicht rückgängig gemacht werden!"
+
+msgid "Post not found or not published"
+msgstr "Beitrag nicht gefunden oder nicht veröffentlicht"
+
+msgid "Post is excluded from interlinking"
+msgstr "Beitrag ist von der Verlinkung ausgeschlossen"
+
+msgid "Content is too short for interlinking"
+msgstr "Inhalt ist zu kurz für Verlinkung"
+
+msgid "No suitable target posts found"
+msgstr "Keine geeigneten Zielbeiträge gefunden"
+
+msgid "API key is not set"
+msgstr "API-Schlüssel ist nicht gesetzt"
+
+msgid "Connection successful!"
+msgstr "Verbindung erfolgreich!"
+
+msgid "API key is not configured"
+msgstr "API-Schlüssel ist nicht konfiguriert"
