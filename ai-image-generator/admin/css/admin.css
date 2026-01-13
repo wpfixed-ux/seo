@@ -1,0 +1,139 @@
+/**
+ * AI Image Generator - Admin Styles
+ */
+
+/* Metabox Styles */
+.aimg-metabox {
+    padding: 10px 0;
+}
+
+.aimg-metabox button.button-large {
+    width: 100%;
+    height: auto;
+    padding: 12px;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.aimg-metabox .dashicons {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.aimg-info {
+    background: #f0f6fc;
+    border-left: 4px solid #0073aa;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+.aimg-success {
+    color: #46b450;
+    font-weight: 600;
+}
+
+.aimg-success .dashicons {
+    color: #46b450;
+}
+
+.aimg-meta {
+    font-size: 12px;
+    color: #666;
+    margin: 5px 0;
+}
+
+.aimg-prompt {
+    background: #fff;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #555;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.aimg-loader {
+    text-align: center;
+    padding: 20px;
+}
+
+.aimg-loader .spinner {
+    float: none;
+    margin: 0 auto;
+}
+
+.aimg-result {
+    margin: 15px 0;
+}
+
+.aimg-result.success {
+    background: #ecf7ed;
+    border-left: 4px solid #46b450;
+    padding: 10px;
+}
+
+.aimg-result.error {
+    background: #fef7f7;
+    border-left: 4px solid #dc3232;
+    padding: 10px;
+    color: #5e1d1d;
+}
+
+.aimg-help {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+/* Product Metabox */
+.aimg-current-image {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.aimg-current-image img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: #fff;
+}
+
+.aimg-background-selector {
+    margin: 15px 0;
+}
+
+.aimg-background-selector label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.aimg-background-selector select {
+    width: 100%;
+}
+
+/* Settings Page */
+.aimg-settings .form-table th {
+    width: 250px;
+}
+
+.aimg-settings h3 {
+    margin: 0;
+    padding: 0;
+}
+
+.aimg-tab-content {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .aimg-metabox button.button-large {
+        padding: 8px;
+    }
+}

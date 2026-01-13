@@ -1,0 +1,542 @@
+/**
+ * WP Options Manager - Admin Styles
+ */
+
+/* Grid Layout */
+.wpom-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+/* Cards */
+.wpom-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.wpom-card h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Stats Grid */
+.wpom-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.wpom-stat-item {
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.wpom-stat-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wpom-stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.wpom-stat-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+}
+
+/* Status Colors */
+.wpom-status-green {
+    color: #46b450;
+}
+
+.wpom-status-yellow {
+    color: #ffb900;
+}
+
+.wpom-status-red {
+    color: #dc3232;
+}
+
+/* Alerts */
+.wpom-alert {
+    padding: 12px 15px;
+    border-left: 4px solid;
+    margin: 15px 0;
+    border-radius: 2px;
+}
+
+.wpom-alert-success {
+    background: #ecf7ed;
+    border-color: #46b450;
+    color: #1e4620;
+}
+
+.wpom-alert-warning {
+    background: #fff8e5;
+    border-color: #ffb900;
+    color: #6c5610;
+}
+
+.wpom-alert-danger {
+    background: #fef7f7;
+    border-color: #dc3232;
+    color: #5e1d1d;
+}
+
+.wpom-alert-info {
+    background: #e5f5fa;
+    border-color: #00a0d2;
+    color: #0e4f6e;
+}
+
+/* Quick Actions */
+.wpom-quick-actions .wpom-action-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    margin: 15px 0;
+    background: #fafafa;
+}
+
+.wpom-quick-actions .wpom-action-item:hover {
+    background: #f5f5f5;
+}
+
+.wpom-action-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+}
+
+.wpom-action-info p {
+    margin: 0;
+    color: #666;
+    font-size: 13px;
+}
+
+/* Navigation Cards */
+.wpom-navigation-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.wpom-nav-card {
+    display: block;
+    padding: 30px;
+    background: #fff;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.wpom-nav-card:hover {
+    border-color: #0073aa;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.wpom-nav-card .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #0073aa;
+    margin-bottom: 15px;
+}
+
+.wpom-nav-card h3 {
+    margin: 10px 0;
+    color: #23282d;
+}
+
+.wpom-nav-card p {
+    color: #666;
+    margin: 0;
+}
+
+/* Tables */
+.wpom-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wpom-table th,
+.wpom-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.wpom-table th {
+    background: #f9f9f9;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.wpom-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+.wpom-table-wrapper {
+    overflow-x: auto;
+    max-height: 600px;
+}
+
+.wpom-row-warning {
+    background: #fff8e5 !important;
+}
+
+/* Badges */
+.wpom-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    letter-spacing: 0.3px;
+}
+
+.wpom-badge-success {
+    background: #46b450;
+    color: #fff;
+}
+
+.wpom-badge-warning {
+    background: #ffb900;
+    color: #000;
+}
+
+.wpom-badge-danger {
+    background: #dc3232;
+    color: #fff;
+}
+
+.wpom-badge-info {
+    background: #00a0d2;
+    color: #fff;
+}
+
+/* Cleaner Sections */
+.wpom-clean-section {
+    padding: 20px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    margin: 15px 0;
+    background: #fafafa;
+}
+
+.wpom-clean-section h3 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.wpom-clean-section p {
+    color: #666;
+    margin: 10px 0;
+}
+
+.wpom-clean-section button {
+    margin-top: 10px;
+}
+
+/* Pattern Cleaner */
+.wpom-pattern-form {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.wpom-form-group {
+    margin-bottom: 15px;
+}
+
+.wpom-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.wpom-form-group input[type="text"],
+.wpom-form-group input[type="number"] {
+    width: 100%;
+    max-width: 500px;
+}
+
+.wpom-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.wpom-pattern-preview {
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+/* Loader */
+.wpom-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.wpom-loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: wpom-spin 1s linear infinite;
+}
+
+.wpom-loader p {
+    color: #fff;
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+@keyframes wpom-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Operation Result */
+.wpom-operation-result {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    max-width: 400px;
+    padding: 15px 20px;
+    background: #fff;
+    border-left: 4px solid;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    animation: wpom-slide-in 0.3s ease;
+}
+
+.wpom-operation-result.success {
+    border-color: #46b450;
+}
+
+.wpom-operation-result.error {
+    border-color: #dc3232;
+}
+
+@keyframes wpom-slide-in {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Actions Bar */
+.wpom-actions {
+    margin: 30px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    gap: 10px;
+}
+
+/* Utility Classes */
+.wpom-text-muted {
+    color: #666;
+}
+
+.wpom-text-center {
+    text-align: center;
+}
+
+.wpom-mt-20 {
+    margin-top: 20px;
+}
+
+.wpom-mb-20 {
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .wpom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wpom-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wpom-navigation-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .wpom-quick-actions .wpom-action-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .wpom-quick-actions .wpom-action-item button {
+        margin-top: 10px;
+    }
+}
+
+/* Button Icons */
+button .dashicons {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* Plugin Cleaner */
+.wpom-plugin-cleaner .wpom-plugin-item {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 15px 0;
+    background: #fafafa;
+}
+
+.wpom-plugin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.wpom-plugin-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wpom-plugin-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+.wpom-plugin-info .wpom-plugin-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.wpom-plugin-stat {
+    text-align: center;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.wpom-plugin-stat-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.wpom-plugin-stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #23282d;
+    margin-top: 5px;
+}
+
+.wpom-plugin-stat-value.large {
+    color: #dc3232;
+}
+
+.wpom-plugin-status {
+    padding: 10px;
+    margin: 10px 0;
+    border-left: 4px solid;
+    border-radius: 2px;
+}
+
+.wpom-plugin-status.active {
+    background: #fff8e5;
+    border-color: #ffb900;
+    color: #6c5610;
+}
+
+.wpom-plugin-status.inactive {
+    background: #ecf7ed;
+    border-color: #46b450;
+    color: #1e4620;
+}
+
+.wpom-plugin-options-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 15px 0;
+}
+
+.wpom-plugin-options-list table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wpom-plugin-options-list th,
+.wpom-plugin-options-list td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 12px;
+}
+
+.wpom-plugin-options-list th {
+    background: #f9f9f9;
+    font-weight: 600;
+}
+
+.wpom-plugin-clean-action {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.wpom-plugin-clean-action button {
+    margin-right: 10px;
+}
